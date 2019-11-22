@@ -1,4 +1,6 @@
 import pygame
+import os #vital to fix the mac issue pt1
+
  
 # Global constants
  
@@ -329,9 +331,18 @@ def main():
         # Go ahead and update the screen with what we've drawn.
         pygame.display.flip()
  
+    while True: #vital for mac issue pt2
+        e = pygame.event.poll() 
+        if e.type == pygame.QUIT:
+            break
+    
+    
+    
     # Be IDLE friendly. If you forget this line, the program will 'hang'
     # on exit.
     pygame.quit()
- 
+    os._exit(0) #vital for the mac issue pt3
+    
+    
 if __name__ == "__main__":
     main()
