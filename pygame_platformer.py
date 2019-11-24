@@ -10,6 +10,8 @@ WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
 RED = (255, 0, 0)
 BLUE = (0, 0, 255)
+bgblue = (24, 82, 156)
+platcol = (96, 96, 96)
  
 # Screen dimensions
 SCREEN_WIDTH = 800
@@ -33,7 +35,7 @@ class Player(pygame.sprite.Sprite):
         width = 40
         height = 60
         self.image = pygame.Surface([width, height])
-        self.image.fill(RED)
+        self.image.fill(BLACK)
  
         # Set a referance to the image rect.
         self.rect = self.image.get_rect()
@@ -130,7 +132,7 @@ class Platform(pygame.sprite.Sprite):
         super().__init__()
  
         self.image = pygame.Surface([width, height])
-        self.image.fill(GREEN)
+        self.image.fill(platcol)
  
         self.rect = self.image.get_rect()
  
@@ -160,7 +162,7 @@ class Level():
         """ Draw everything on this level. """
  
         # Draw the background
-        screen.fill(BLUE)
+        screen.fill(bgblue)
  
         # Draw all the sprite lists that we have
         self.platform_list.draw(screen)
@@ -194,10 +196,12 @@ class Level_01(Level):
         self.level_limit = -1000
  
         # Array with width, height, x, and y of platform
-        level = [[210, 70, 500, 500],
-                 [210, 70, 800, 400],
-                 [210, 70, 1000, 500],
-                 [210, 70, 1120, 280],
+        level = [[210, 70, 500, 450],
+                 [210, 70, 800, 350],
+                 [210, 70, 1000, 450],
+                 [210, 70, 1120, 230],
+                 [1000, 50, 0, SCREEN_HEIGHT-50],
+                 [1200, 50, 1400, SCREEN_HEIGHT-50]
                  ]
  
         # Go through the array above and add platforms
@@ -222,10 +226,12 @@ class Level_02(Level):
         self.level_limit = -1000
  
         # Array with type of platform, and x, y location of the platform.
-        level = [[210, 30, 450, 570],
-                 [210, 30, 850, 420],
-                 [210, 30, 1000, 520],
-                 [210, 30, 1120, 280],
+        level = [[210, 90, 450, 480],
+                 [210, 30, 850, 370],
+                 [210, 30, 1000, 480],
+                 [210, 30, 1120, 230],
+                 [1000, 50, 0, SCREEN_HEIGHT-50],
+                 [1200, 50, 1400, SCREEN_HEIGHT-50]
                  ]
  
         # Go through the array above and add platforms
@@ -263,7 +269,7 @@ def main():
     player.level = current_level
  
     player.rect.x = 340
-    player.rect.y = SCREEN_HEIGHT - player.rect.height
+    player.rect.y = 450
     active_sprite_list.add(player)
  
     # Loop until the user clicks the close button.
@@ -272,6 +278,15 @@ def main():
     # Used to manage how fast the screen updates
     clock = pygame.time.Clock()
  
+    def game_over():
+        # If game over is true, do game over action - can be further edited to add text to screen, 
+        # can possibly also add a 'click enter to restart' function later
+        player.image.fill(BLACK)
+    
+    
+    
+    
+    
     # -------- Main Program Loop -----------
     while not done:
         for event in pygame.event.get():
@@ -310,6 +325,12 @@ def main():
             player.rect.left = 120
             current_level.shift_world(diff)
  
+        if player.rect.bottom == SCREEN_HEIGHT: 
+            game_over() #works without the break, but break seems to happen before colour change now
+            break #stops player from continuing after hitting floor
+    
+    
+    
         # If the player gets to the end of the level, go to the next level
         current_position = player.rect.x + current_level.world_shift
         if current_position < current_level.level_limit:
