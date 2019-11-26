@@ -17,7 +17,7 @@ platcol = (22, 19, 33)
 # Character
 widthChar = 64
 heightChar = 64
-gravity = -5
+gravity = 2.5
 jumpHeight = -27.5
 playerBehind = 13
 
