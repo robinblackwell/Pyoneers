@@ -1,7 +1,7 @@
 import pygame
 import os #vital to fix the mac issue pt1
 
- 
+
 # Global constants
  
 # Colors
@@ -11,12 +11,44 @@ GREEN = (0, 255, 0)
 RED = (255, 0, 0)
 BLUE = (0, 0, 255)
 bgblue = (24, 82, 156)
-platcol = (96, 96, 96)
- 
+bgColour = (33, 46, 66)
+platcol = (22, 19, 33)
+
+# Character
+widthChar = 64
+heightChar = 64
+gravity = 2.5
+jumpHeight = -27.5
+playerBehind = 13
+
+# Get current state of character
+movingLeft = False
+movingRight = False
+isJump = False
+walkCount = 0
+
+#Sprite for the character
+char = pygame.image.load("assets/player1.png")
+charDead = pygame.image.load("assets/player_dead.png")
+
+# Background
+bg = pygame.image.load("assets/bg.png")
+groundTile = pygame.image.load("assets/ground_tile1.png")
+bgY = 0
+bgX = 0
+
+# Game icon
+gameIcon = char
+pygame.display.set_icon(gameIcon)
+
 # Screen dimensions
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
- 
+
+
+def redrawWindow():
+    global walkCount
+
  
 class Player(pygame.sprite.Sprite):
     """
@@ -29,16 +61,17 @@ class Player(pygame.sprite.Sprite):
  
         # Call the parent's constructor
         super().__init__()
- 
-        # Create an image of the block, and fill it with a color.
-        # This could also be an image loaded from the disk.
-        width = 40
-        height = 60
-        self.image = pygame.Surface([width, height])
-        self.image.fill(BLACK)
+
+        global char
+        # Set player to sprite image and keep alpha levels the same a png source
+        self.image = char.convert_alpha()
+        self.image.blit(self.image, (0, 0))
  
         # Set a referance to the image rect.
         self.rect = self.image.get_rect()
+        
+        # Make player look like it's under the gras, move by a few pixels.  
+        self.rect[3] -= playerBehind 
  
         # Set speed vector of player
         self.change_x = 0
@@ -85,9 +118,10 @@ class Player(pygame.sprite.Sprite):
     def calc_grav(self):
         """ Calculate effect of gravity. """
         if self.change_y == 0:
-            self.change_y = 1
+            self.change_y = 2
         else:
-            self.change_y += .35
+            global gravity
+            self.change_y += gravity
  
         # See if we are on the ground.
         if self.rect.y >= SCREEN_HEIGHT - self.rect.height and self.change_y >= 0:
@@ -100,26 +134,42 @@ class Player(pygame.sprite.Sprite):
         # move down a bit and see if there is a platform below us.
         # Move down 2 pixels because it doesn't work well if we only move down 1
         # when working with a platform moving down.
-        self.rect.y += 2
+        self.rect.y += 1
         platform_hit_list = pygame.sprite.spritecollide(self, self.level.platform_list, False)
-        self.rect.y -= 2
+        self.rect.y -= 1
  
         # If it is ok to jump, set our speed upwards
         if len(platform_hit_list) > 0 or self.rect.bottom >= SCREEN_HEIGHT:
-            self.change_y = -10
+            global jumpHeight
+            global movingLeft
+            global movingLeft
+            global isJump
+            global walkCount
+            self.change_y = jumpHeight
+            movingLeft = False
+            movingRight = False 
+            isJump = True
+            walkCount = 0
  
     # Player-controlled movement:
     def go_left(self):
         """ Called when the user hits the left arrow. """
         self.change_x = -6
+        global movingLeft, movingRight
+        movingLeft = True
+        movingRight = False
  
     def go_right(self):
         """ Called when the user hits the right arrow. """
         self.change_x = 6
+        global movingLeft, movingRight
+        movingLeft = False
+        movingRight = True
  
     def stop(self):
         """ Called when the user lets off the keyboard. """
         self.change_x = 0
+        walkCount = 0
  
  
 class Platform(pygame.sprite.Sprite):
@@ -130,10 +180,13 @@ class Platform(pygame.sprite.Sprite):
             an array of 5 numbers like what's defined at the top of this code.
             """
         super().__init__()
- 
+        global groundTile
         self.image = pygame.Surface([width, height])
-        self.image.fill(platcol)
- 
+        
+        self.image = groundTile.convert_alpha()
+        self.image.blit(groundTile, (0, 0))
+
+        # Set a referance to the image rect.
         self.rect = self.image.get_rect()
  
  
@@ -160,9 +213,10 @@ class Level():
  
     def draw(self, screen):
         """ Draw everything on this level. """
- 
         # Draw the background
-        screen.fill(bgblue)
+        global bgY
+        global bgX
+        screen.blit(bg, (bgX, bgY))
  
         # Draw all the sprite lists that we have
         self.platform_list.draw(screen)
@@ -279,9 +333,10 @@ def main():
     clock = pygame.time.Clock()
  
     def game_over():
+
         # If game over is true, do game over action - can be further edited to add text to screen, 
         # can possibly also add a 'click enter to restart' function later
-        player.image.fill(BLACK)
+        player.image.blit(charDead , (0, 0))
     
     
     
@@ -298,7 +353,7 @@ def main():
                     player.go_left()
                 if event.key == pygame.K_RIGHT:
                     player.go_right()
-                if event.key == pygame.K_UP:
+                if event.key == pygame.K_SPACE:
                     player.jump()
  
             if event.type == pygame.KEYUP:
@@ -341,13 +396,14 @@ def main():
                 player.level = current_level
  
         # ALL CODE TO DRAW SHOULD GO BELOW THIS COMMENT
+        redrawWindow
         current_level.draw(screen)
         active_sprite_list.draw(screen)
  
         # ALL CODE TO DRAW SHOULD GO ABOVE THIS COMMENT
  
         # Limit to 60 frames per second
-        clock.tick(60)
+        clock.tick(30)
  
         # Go ahead and update the screen with what we've drawn.
         pygame.display.flip()
@@ -367,3 +423,20 @@ def main():
     
 if __name__ == "__main__":
     main()
+
+
+
+# TODO
+
+# - Read that drawing the elements on screen on the while loop is not the most efficinet way to do it. Create a function where all the code to draw should be.
+# - Make player jump faster, more gravitiy needed. Feels too floaty.
+# - Add momentum to player when moving.
+# - Add icon to app when open.
+# - Invert gravity when boots are worn.
+
+# CHANGES
+# - Jump has been changed to space.
+# - Game icon changed
+
+
+# https: // www.youtube.com/watch?v = UdsNBIzsmlI
