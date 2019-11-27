@@ -166,11 +166,15 @@ class Player(pygame.sprite.Sprite):
         movingLeft = False
         movingRight = True
  
-    def stop(self):
-        """ Called when the user lets off the keyboard. """
+    def stopr(self):
+        self.change_x -=1
+    
+    def stopl(self):
+        self.change_x +=1 
+    
+    def stopdead(self):
         self.change_x = 0
         walkCount = 0
- 
  
 class Platform(pygame.sprite.Sprite):
     """ Platform the user can jump on """
@@ -357,10 +361,22 @@ def main():
                     player.jump()
  
             if event.type == pygame.KEYUP:
-                if event.key == pygame.K_LEFT and player.change_x < 0:
-                    player.stop()
-                if event.key == pygame.K_RIGHT and player.change_x > 0:
-                    player.stop()
+                if event.key == pygame.K_LEFT and player.change_x < 0 and player.change_y == 0:
+                    for i in range(0,6):
+                        player.stopl()
+                        player.update()
+                        
+                elif event.key == pygame.K_RIGHT and player.change_x > 0 and player.change_y == 0:
+                   for i in range(0,6):
+                        player.stopr()
+                        player.update()
+                elif event.type == pygame.KEYUP:
+                    if event.key == pygame.K_LEFT and player.change_x < 0:
+                        player.stopdead()
+                    elif event.key == pygame.K_RIGHT and player.change_x > 0:
+                        player.stopdead()
+                else:
+                    pass
  
         # Update the player.
         active_sprite_list.update()
