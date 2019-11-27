@@ -4,6 +4,8 @@ import os #vital to fix the mac issue pt1
 
 # Global constants
  
+FPS = 60
+
 # Colors
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -17,7 +19,7 @@ platcol = (22, 19, 33)
 # Character
 widthChar = 64
 heightChar = 64
-gravity = 2.5
+gravity = 2.8
 jumpHeight = -27.5
 playerBehind = 13
 
@@ -28,8 +30,10 @@ isJump = False
 walkCount = 0
 
 #Sprite for the character
-char = pygame.image.load("assets/player1.png")
-charDead = pygame.image.load("assets/player_dead.png")
+charRight = pygame.image.load("assets/playerRight.png")
+charLeft = pygame.image.load("assets/playerLeft.png")
+charJump = pygame.image.load("assets/playerJump.png")
+charDead = pygame.image.load("assets/playerDead.png")
 
 # Background
 bg = pygame.image.load("assets/bg.png")
@@ -38,11 +42,11 @@ bgY = 0
 bgX = 0
 
 # Game icon
-gameIcon = char
+gameIcon = pygame.image.load("assets/icon.png")
 pygame.display.set_icon(gameIcon)
 
 # Screen dimensions
-SCREEN_WIDTH = 800
+SCREEN_WIDTH = 1000
 SCREEN_HEIGHT = 600
 
 
@@ -62,10 +66,9 @@ class Player(pygame.sprite.Sprite):
         # Call the parent's constructor
         super().__init__()
 
-        global char
+        global charRight
         # Set player to sprite image and keep alpha levels the same a png source
-        self.image = char.convert_alpha()
-        self.image.blit(self.image, (0, 0))
+        self.image = charRight.convert_alpha()
  
         # Set a referance to the image rect.
         self.rect = self.image.get_rect()
@@ -146,6 +149,7 @@ class Player(pygame.sprite.Sprite):
             global isJump
             global walkCount
             self.change_y = jumpHeight
+            self.image = charJump.convert_alpha()
             movingLeft = False
             movingRight = False 
             isJump = True
@@ -155,6 +159,7 @@ class Player(pygame.sprite.Sprite):
     def go_left(self):
         """ Called when the user hits the left arrow. """
         self.change_x = -6
+        self.image = charLeft.convert_alpha()
         global movingLeft, movingRight
         movingLeft = True
         movingRight = False
@@ -162,6 +167,7 @@ class Player(pygame.sprite.Sprite):
     def go_right(self):
         """ Called when the user hits the right arrow. """
         self.change_x = 6
+        self.image = charRight.convert_alpha()
         global movingLeft, movingRight
         movingLeft = False
         movingRight = True
@@ -199,6 +205,7 @@ class Level():
         """ Constructor. Pass in a handle to player. Needed for when moving
             platforms collide with the player. """
         self.platform_list = pygame.sprite.Group()
+        
         self.enemy_list = pygame.sprite.Group()
         self.player = player
  
@@ -403,7 +410,7 @@ def main():
         # ALL CODE TO DRAW SHOULD GO ABOVE THIS COMMENT
  
         # Limit to 60 frames per second
-        clock.tick(30)
+        clock.tick(FPS)
  
         # Go ahead and update the screen with what we've drawn.
         pygame.display.flip()
@@ -415,8 +422,7 @@ def main():
     
     
     
-    # Be IDLE friendly. If you forget this line, the program will 'hang'
-    # on exit.
+    # Be IDLE friendly. If you forget this line, the program will 'hang' on exit.
     pygame.quit()
     os._exit(0) #vital for the mac issue pt3
     
@@ -427,16 +433,20 @@ if __name__ == "__main__":
 
 
 # TODO
-
-# - Read that drawing the elements on screen on the while loop is not the most efficinet way to do it. Create a function where all the code to draw should be.
-# - Make player jump faster, more gravitiy needed. Feels too floaty.
-# - Add momentum to player when moving.
-# - Add icon to app when open.
+# - Set dimension of tiles.
+# - Create function to draw elements on screen.
+# - Add boots to game.
 # - Invert gravity when boots are worn.
-
-# CHANGES
-# - Jump has been changed to space.
-# - Game icon changed
+# - Animate character when moving.
+# - Invert sprite when character changes direction.
+# - Add fire to bottom of screen.
+# - Add portal to beginning of screen.
+# - Add parallax effect to BG.
+# - 
+# - 
+# - 
+# - 
 
 
 # https: // www.youtube.com/watch?v = UdsNBIzsmlI
+# https: // www.youtube.com/watch?v = HCWI2f7tQnY
