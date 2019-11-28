@@ -2,15 +2,14 @@ import pygame
 import os  # vital to fix the mac issue pt1
 
 # Global variables
-FPS = 24
+FPS = 40
+levelLimit = -1000
 
 # Character
-widthChar = 64
-heightChar = 64
-gravity = 2.8
+gravity = 4
 jumpHeight = -27.5
-playerBehind = 13
-playerVel = 6
+playerBehind = 9
+playerVel = 8
 
 # Get current state of character
 movingLeft = False
@@ -20,7 +19,9 @@ isJumpLeft = False
 standing = True
 
 isJump = False
-walkCount = 0
+walkCount12 = 0
+walkCount2 = 0
+
 
 
 def getImage(source):
@@ -28,10 +29,8 @@ def getImage(source):
 
 
 # Player sprites
-charRight = [getImage("playerRight.png"), getImage("playerRight2.png"), getImage("playerRight.png"), getImage("playerRight2.png"), getImage(
-    "playerRight.png"), getImage("playerRight2.png"), getImage("playerRight.png"), getImage("playerRight2.png"), getImage("playerRight.png")]
-charLeft = [getImage("playerLeft.png"), getImage("playerLeft2.png"), getImage("playerLeft.png"), getImage("playerLeft2.png"), getImage(
-    "playerLeft2.png"), getImage("playerLeft.png"), getImage("playerLeft2.png"), getImage("playerLeft.png"), getImage("playerLeft2.png"), getImage("playerLeft2.png")]
+charRight = [getImage("playerRight.png"), getImage("playerRight2.png")]
+charLeft = [getImage("playerLeft.png"), getImage("playerLeft2.png")]
 charStanding = [getImage("playerStanding1.png"), getImage("playerStanding2.png"), getImage("playerStanding3.png"), getImage("playerStanding4.png"), getImage(
     "playerStanding2.png"), getImage("playerStanding5.png"), getImage("playerStanding1.png"), getImage("playerStanding2.png"), getImage("playerStanding3.png"),getImage("playerStanding1.png"), getImage("playerStanding2.png"), getImage("playerStanding3.png")]
 charJump = getImage("playerJump.png")
@@ -41,7 +40,16 @@ jumpLeft = getImage("jumpLeft.png")
 
 # Background
 bg = getImage("bg.png")
-groundTile = getImage("ground_tile1.png")
+groundTileTop = getImage("ground/groundTile_top.png")
+groundTileInner = getImage("ground/groundTile_inner.png")
+groundTileCorner = getImage("ground/groundTile_corner.png")
+
+boot1 = getImage("boot/boot1.png")
+house = getImage("house.png")
+
+vine = getImage("vine.png")
+noticeBoard = getImage("noticeBoard.png")
+portal = getImage("portal.png")
 bgY = 0
 bgX = 0
 
@@ -50,8 +58,8 @@ gameIcon = getImage("icon.png")
 pygame.display.set_icon(gameIcon)
 
 # Screen dimensions
-SCREEN_WIDTH = 1000
-SCREEN_HEIGHT = 600
+SCREEN_WIDTH = 1024
+SCREEN_HEIGHT = 640
 
 pygame.init()
 
@@ -74,6 +82,7 @@ class Player(pygame.sprite.Sprite):
 
         # Set a referance to the image rect.
         self.rect = self.image.get_rect()
+        
 
         # Make player look like it's under the grassZ, move by a few pixels.
         self.rect[3] -= playerBehind
@@ -86,34 +95,11 @@ class Player(pygame.sprite.Sprite):
         self.level = None
 
     def update(self):
+        # Gravity
+        self.calc_grav()
 
         global isJumpLeft
         global isJumpRight
-        global movingLeft
-        global movingRight
-        global standing
-        global jumpLeft
-        global jumpRight
-
-        # Set player image to its direction
-
-        # def setImage(newImage):
-        #     # self.image = newImage.convert_alpha()
-        #     screen.blit(newImage[0])
-
-        # if movingLeft:
-        #     setImage(charLeft)
-        # elif movingRight:
-        #     setImage(charStandingight)
-        # elif isJumpLeft:
-        #     setImage(jumpLeft)
-        # elif isJumpRight:
-        #     setImage(jumpRight)
-        # elif standing:
-        #     setImage(charStanding)
-
-        # Gravity
-        self.calc_grav()
 
         # Move left/right
         self.rect.x += self.change_x
@@ -170,7 +156,8 @@ class Player(pygame.sprite.Sprite):
         global standing
         global isJumpRight
         global isJumpLeft
-        global walkCount
+        global walkCount12
+        global walkCount2
 
         # TODO Needed???
         # move down a bit and see if there is a platform below us. Move down 2 pixels because it doesn't work well if we only move down 1 when working with a platform moving down.
@@ -184,15 +171,17 @@ class Player(pygame.sprite.Sprite):
         if len(platform_hit_list) > 0 or self.rect.bottom >= SCREEN_HEIGHT:
             
             self.change_y = jumpHeight
-            # self.image = charJump.convert_alpha()
-            if movingLeft:
-                isJumpLeft = True
-            elif movingRight:
-                isJumpRight = True
-            movingLeft = False
-            movingRight = False
+        
+        # Set player animation for when jumping 
+            # if movingLeft:
+            #     isJumpLeft = True
+            # elif movingRight:
+            #     isJumpRight = True
+            # movingLeft = False
+            # movingRight = False
             standing = False
-            walkCount = 0
+            walkCount12 = 0
+            walkCount2 = 0
 
     # Player-controlled movement:
     def go_left(self):
@@ -213,29 +202,27 @@ class Player(pygame.sprite.Sprite):
 
     def stop(self):
         # Called when the user lets off the keyboard.
-        global movingLeft, movingRight, standing, walkCount, isJumpLeft, isJumpRight
+        global movingLeft, movingRight, standing, walkCount12, walkCount2, isJumpLeft, isJumpRight
         self.change_x = 0
         movingLeft = False
         movingRight = False
         isJumpRight = False
         isJumpLeft = False
         standing = True
-        walkCount = 0
-
+        walkCount12 = 0
+        walkCount2 = 0
 
 class Platform(pygame.sprite.Sprite):
     """ Platform the user can jump on """
 
-    def __init__(self, width, height):
+    def __init__(self, tileType):
         """ Platform constructor. Assumes constructed with user passing in
             an array of 5 numbers like what's defined at the top of this code.
             """
         super().__init__()
-        global groundTile
-        self.image = pygame.Surface([width, height])
-
-        self.image = groundTile.convert_alpha()
-        self.image.blit(groundTile, (0, 0))
+        self.tileType = tileType
+        self.image = self.tileType.convert_alpha()
+        self.image.blit(self.tileType, (0, 0))
 
         # Set a referance to the image rect.
         self.rect = self.image.get_rect()
@@ -273,7 +260,7 @@ class Level():
         """ Draw everything on this level. """
         # Draw all the sprite lists that we have
         self.platform_list.draw(screen)
-        self.enemy_list.draw(screen)
+        # self.enemy_list.draw(screen)
 
     def shift_world(self, shift_x):
         """ When the user moves left/right and we need to scroll
@@ -300,24 +287,99 @@ class Level_01(Level):
         # Call the parent constructor
         Level.__init__(self, player)
 
-        self.level_limit = -1000
+        self.level_limit = levelLimit
 
-        # Array with width, height, x, and y of platform
-        level = [[210, 70, 500, 450],
-                 [210, 70, 800, 350],
-                 [210, 70, 1000, 450],
-                 [210, 70, 1120, 230],
-                 [1000, 50, 0, SCREEN_HEIGHT-50],
-                 [1200, 50, 1400, SCREEN_HEIGHT-50]
-                 ]
+    # Array with width, height, x, and y of platform
+        # level = [[210, 70, 500, 450],
+        #          [210, 70, 800, 350],
+        #          [210, 70, 1000, 450],
+        #          [210, 70, 1120, 230],
+        #          [1000, 50, 0, SCREEN_HEIGHT-50],
+        #          [1200, 50, 1400, SCREEN_HEIGHT-50]
+        #          ]
 
         # Go through the array above and add platforms
-        for platform in level:
-            block = Platform(platform[0], platform[1])
-            block.rect.x = platform[2]
-            block.rect.y = platform[3]
-            block.player = self.player
+        # for platform in level:
+        #     block = Platform(groundTile)
+        #     # block.rect.x = block.image.get_rect().x
+        #     # block.rect.y = block.image.get_rect().y
+        #     block.rect.x = platform[2]
+        #     block.rect.y = platform[3]
+        #     block.player = self.player
+    #     self.platform_list.add(block)
+        
+        levelLayout = [ [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 5.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.5, 1.7, 1.7, 1.7, 1.7, 1.7, 1.7, 1.7, 1.7, 1.6, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, ],
+                        
+                        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, ],
+
+                        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, ],
+                        
+                        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,],
+                        
+                        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,],
+                        
+                        [0.0, 4.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.1, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.2,
+                         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,],
+                        
+                        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.1, 1.2, 0.0, 0.0, 0.0, 1.4, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 1.3,
+                         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 7.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,],
+                        
+                        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 3.0, 0.0, 1.1, 1.2, 0.0, 1.1, 1.2, 0.0, 1.5, 1.6, 0.0, 0.0, 0.0, 1.4, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 1.3,
+                         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, ],
+                        
+                        [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.3, 0.0, 1.5, 1.6, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.4, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 1.3,
+                         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, .0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 6.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,],
+                        
+                        [2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 1.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.4, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 1.3,
+                         0.0, 0.0, 1.1, 1.0, 1.0, 1.2, 0.0, 1.1, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.1, 1.0, 1.0, 1.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, ]
+        ]
+
+        def updateLevelImages(classType, imageToUpdate):
+            block = classType(imageToUpdate)
+            block.rect.x += x
+            block.rect.y += y
             self.platform_list.add(block)
+
+        y = 0
+        for platform in levelLayout:
+            x = 0
+            for tile in platform:
+                if tile == 1:
+                    updateLevelImages(Platform, groundTileTop,)
+                elif tile == 1.1:
+                    updateLevelImages(Platform, groundTileCorner)
+                elif tile == 1.2:
+                    updateLevelImages(Platform, pygame.transform.flip(groundTileCorner, True, False))
+                elif tile == 1.3:
+                    updateLevelImages(Platform, pygame.transform.rotate(groundTileTop, -90))
+                elif tile == 1.4:
+                    updateLevelImages(Platform, pygame.transform.rotate(groundTileTop, 90))
+                elif tile == 1.5:
+                    updateLevelImages(Platform, pygame.transform.flip(groundTileCorner, False, True))
+                elif tile == 1.6:
+                    updateLevelImages(Platform, pygame.transform.flip(groundTileCorner, True, True))
+                elif tile == 1.7:
+                    updateLevelImages(Platform, pygame.transform.flip(groundTileTop, False, True))
+                elif tile == 2:
+                    updateLevelImages(Platform, groundTileInner)
+                elif tile == 3:
+                    updateLevelImages(Platform, noticeBoard)
+                elif tile == 4:
+                    updateLevelImages(Platform, portal)
+                elif tile == 5:
+                    updateLevelImages(Platform, vine)
+                elif tile == 6:
+                    updateLevelImages(Platform, boot1)
+                elif tile == 7:
+                    updateLevelImages(Platform, house)
+                x += 64
+            y += 64
+
 
 
 # Create platforms for the level
@@ -343,7 +405,7 @@ class Level_02(Level):
 
         # Go through the array above and add platforms
         for platform in level:
-            block = Platform(platform[0], platform[1])
+            block = Platform(platform[0], platform[1], groundTile)
             block.rect.x = platform[2]
             block.rect.y = platform[3]
             block.player = self.player
@@ -365,7 +427,7 @@ def main():
     # Create all the levels
     level_list = []
     level_list.append(Level_01(player))
-    level_list.append(Level_02(player))
+    # level_list.append(Level_02(player))
 
     # Set the current level
     current_level_no = 0
@@ -377,32 +439,11 @@ def main():
     player.rect.x = 340
     player.rect.y = 450
     active_sprite_list.add(player)
-    
+
     # Displays objects
     def redrawWindow():
-        global walkCount
-        
-        if walkCount + 1 >= 28:
-            walkCount = 0
 
-        def setImage(newImage):
-            player.image = newImage.convert_alpha()
-            
-
-        if movingLeft:
-            setImage(charLeft[walkCount//3])
-            walkCount += 1
-        elif movingRight:
-            setImage(charRight[walkCount//3])
-            walkCount += 1
-        elif isJumpLeft:
-            setImage(jumpLeft)
-        elif isJumpRight:
-            setImage(jumpRight)
-        elif standing:
-            setImage(charStanding[walkCount//3])
-            walkCount += 1
-
+        animatePlayer()
         # Define what is drwan on screen
         current_level.drawBg(screen)
         active_sprite_list.draw(screen)
@@ -412,6 +453,31 @@ def main():
         current_level.update()
         active_sprite_list.update()
         pygame.display.flip()
+
+    def animatePlayer():
+        global walkCount12
+        global walkCount2
+        if walkCount12 + 1 >= 28:
+            walkCount12 = 0
+        elif walkCount2 + 1 >=7:
+            walkCount2 = 0
+
+        def setImage(newImage):
+            player.image = newImage.convert_alpha()
+
+        if movingLeft:
+            setImage(charLeft[walkCount2//3])
+            walkCount2 += 1
+        elif movingRight:
+            setImage(charRight[walkCount2//3])
+            walkCount2 += 1
+        elif isJumpLeft:
+            setImage(jumpLeft)
+        elif isJumpRight:
+            setImage(jumpRight)
+        elif standing:
+            setImage(charStanding[walkCount12//3])
+            walkCount12 += 1
 
     # TODO - remove duplication
     def moveCam(rightShift, leftShift):
@@ -429,7 +495,8 @@ def main():
         global movingRight
         global movingLeft
         global standing
-        global walkCount
+        global walkCount12
+        global walkCount2
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -445,7 +512,8 @@ def main():
                     movingLeft = False
                     movingRight = False
                     standing = True
-                    walkCount = 0
+                    walkCount12 = 0
+                    walkCount2 = 0
 
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_LEFT and player.change_x < 0:
@@ -462,17 +530,17 @@ def main():
         
         if player.rect.bottom == SCREEN_HEIGHT:
             game_over()
-            # pygame.quit()
+            pygame.quit()
             break
 
         # If the player gets to the end of the level, go to the next level
-        current_position = player.rect.x + current_level.world_shift
-        if current_position < current_level.level_limit:
-            player.rect.x = 120
-            if current_level_no < len(level_list)-1:
-                current_level_no += 1
-                current_level = level_list[current_level_no]
-                player.level = current_level
+        # current_position = player.rect.x + current_level.world_shift
+        # if current_position < current_level.level_limit:
+        #     player.rect.x = 120
+        #     if current_level_no < len(level_list)-1:
+        #         current_level_no += 1
+        #         current_level = level_list[current_level_no]
+        #         player.level = current_level
 
 
         # ALL CODE TO DRAW SHOULD GO BELOW THIS COMMENT
@@ -499,16 +567,15 @@ if __name__ == "__main__":
 
 
 # TODO
-# - Set dimension of tiles.
-# - Create function to draw elements on screen.
 # - Add boots to game.
 # - Invert gravity when boots are worn.
-# - Animate character when moving.
-# - Invert sprite when character changes direction.
-# - Add fire to bottom of screen.
-# - Add portal to beginning of screen.
 # - Add parallax effect to BG.
-# -
+# TO ANIMATE:
+    # - Glowing portal 
+    # - Being spit out of portal 
+    # - Vine moving 
+    # - Fireflies
+    # - House house
 
 
 # https: // www.youtube.com/watch?v = UdsNBIzsmlI
