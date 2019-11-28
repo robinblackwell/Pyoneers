@@ -142,7 +142,7 @@ class Player(pygame.sprite.Sprite):
         if len(platform_hit_list) > 0 or self.rect.bottom >= SCREEN_HEIGHT:
             global jumpHeight
             global movingLeft
-            global movingLeft
+            global movingLeft #looks like an error, should probably be movingRight?
             global isJump
             global walkCount
             self.change_y = jumpHeight
@@ -341,7 +341,7 @@ def main():
         # If game over is true, do game over action - can be further edited to add text to screen, 
         # can possibly also add a 'click enter to restart' function later
         player.image.blit(charDead , (0, 0))
-    
+       
     
     
     
@@ -397,9 +397,8 @@ def main():
             current_level.shift_world(diff)
  
         if player.rect.bottom == SCREEN_HEIGHT: 
-            game_over() #works without the break, but break seems to happen before colour change now
-            break #stops player from continuing after hitting floor
-    
+           game_over() 
+           done = True #allows player image to become dead player image before locking it down - can now add things to game over function
     
     
         # If the player gets to the end of the level, go to the next level
