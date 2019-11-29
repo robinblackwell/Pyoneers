@@ -142,7 +142,7 @@ class Player(pygame.sprite.Sprite):
         if len(platform_hit_list) > 0 or self.rect.bottom >= SCREEN_HEIGHT:
             global jumpHeight
             global movingLeft
-            global movingLeft #looks like an error, should probably be movingRight?
+            global movingLeft #looks like an error, probably should be movingRight?
             global isJump
             global walkCount
             self.change_y = jumpHeight
@@ -168,9 +168,11 @@ class Player(pygame.sprite.Sprite):
  
     def stopr(self):
         self.change_x -=1
+        
     
     def stopl(self):
-        self.change_x +=1 
+        self.change_x +=1
+       
     
     def stopdead(self):
         self.change_x = 0
@@ -193,7 +195,29 @@ class Platform(pygame.sprite.Sprite):
         # Set a referance to the image rect.
         self.rect = self.image.get_rect()
  
- 
+    
+class Projectile(pygame.sprite.Sprite): #basic projectile class
+    
+    
+    def __init__(self,x,y): #taken as player x and y so projectile fires from their position
+      
+        self.x = x
+        self.y = y
+        self.vel = 10
+        
+    def show(self,colour):
+        self.image = pygame.draw.rect(bg, BLACK, (self.x,self.y,25,5)) # surface, colour,( x, y, width, height)
+        
+     
+    def shoot(self):
+        global bgColour
+        
+        self.show(bgColour) #should redraw the previous position as the background colour but doesn't seem to work
+        self.x += self.vel
+         
+        
+        
+        
 class Level():
     """ This is a generic super-class used to define a level.
         Create a child class for each level with level-specific
@@ -314,6 +338,10 @@ def main():
     # Create the player
     player = Player()
  
+    arrows = [] #where the projectiles will be contained
+    
+    
+    
     # Create all the levels
     level_list = []
     level_list.append(Level_01(player))
@@ -336,12 +364,16 @@ def main():
     # Used to manage how fast the screen updates
     clock = pygame.time.Clock()
  
+    # font = pygame.font.SysFont(0,25) - commented out for now due to font issues
+    
     def game_over():
 
         # If game over is true, do game over action - can be further edited to add text to screen, 
         # can possibly also add a 'click enter to restart' function later
         player.image.blit(charDead , (0, 0))
-       
+      #  screen_text = font.render("Game Over",bg,RED) - commented out for now due to font issues
+      #  bg.blit(screen_text, 155,155) - commented out for now due to font issues
+    
     
     
     
@@ -359,31 +391,45 @@ def main():
                     player.go_right()
                 if event.key == pygame.K_SPACE:
                     player.jump()
+                if event.key == pygame.K_RETURN:
+                    if len(arrows) < 3:
+                        arrows.append(Projectile(player.rect.x,player.rect.y))
  
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_LEFT and player.change_x < 0 and player.change_y == 0:
-                    for i in range(0,6):
+                    for i in range(0,6): #inertia function - loops for amount of times based on standard player speed - could be refactored later
                         player.stopl()
+                        pygame.time.wait(1) #added to play around with slowdown speed
                         player.update()
                         
                 elif event.key == pygame.K_RIGHT and player.change_x > 0 and player.change_y == 0:
                    for i in range(0,6):
                         player.stopr()
                         player.update()
+                        
                 elif event.type == pygame.KEYUP:
                     if event.key == pygame.K_LEFT and player.change_x < 0:
-                        player.stopdead()
+                        player.stopdead() #stopdead created to avoid mid air inertia
                     elif event.key == pygame.K_RIGHT and player.change_x > 0:
                         player.stopdead()
                 else:
                     pass
- 
+            
+            
+            for arrow in arrows:
+                if arrow.x > 500 or arrow.x < 0: 
+                    arrows.pop(arrows.index(arrow)) #stops projectile once it hits x = 500 but inconsistent currently
+            
         # Update the player.
         active_sprite_list.update()
- 
+        
         # Update items in the level
         current_level.update()
- 
+        
+        for arrow in arrows:
+            arrow.show(BLACK)
+            arrow.shoot()
+    
         # If the player gets near the right side, shift the world left (-x)
         if player.rect.right >= 500:
             diff = player.rect.right - 500
@@ -397,8 +443,9 @@ def main():
             current_level.shift_world(diff)
  
         if player.rect.bottom == SCREEN_HEIGHT: 
-           game_over() 
-           done = True #allows player image to become dead player image before locking it down - can now add things to game over function
+            game_over() #works without the break, but break seems to happen before colour change now
+            done = True #stops player from continuing after hitting floor
+    
     
     
         # If the player gets to the end of the level, go to the next level
@@ -414,6 +461,9 @@ def main():
         redrawWindow
         current_level.draw(screen)
         active_sprite_list.draw(screen)
+        
+        
+        
  
         # ALL CODE TO DRAW SHOULD GO ABOVE THIS COMMENT
  
