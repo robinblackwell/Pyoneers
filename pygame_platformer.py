@@ -42,7 +42,7 @@ jumpLeft = getImage("jumpLeft.png")
 bg = getImage("bg.png")
 groundTileTop = getImage("ground/groundTile_top.png")
 groundTileInner = getImage("ground/groundTile_inner.png")
-groundTileCorner = getImage("ground/groundTile_corner.png")
+projectileImg = getImage("ground/groundTile_corner.png")
 
 boot1 = getImage("boot/boot1.png")
 house = getImage("house.png")
@@ -212,6 +212,16 @@ class Player(pygame.sprite.Sprite):
         walkCount12 = 0
         walkCount2 = 0
 
+
+class Projectile(pygame.sprite.Sprite):
+    def __init__(self, tileType):
+
+        super().__init__()
+        self.image = projectileImg.convert_alpha()
+
+        # Set a referance to the image rect.
+        self.rect = self.image.get_rect()
+
 class Platform(pygame.sprite.Sprite):
     """ Platform the user can jump on """
 
@@ -288,25 +298,6 @@ class Level_01(Level):
         Level.__init__(self, player)
 
         self.level_limit = levelLimit
-
-    # Array with width, height, x, and y of platform
-        # level = [[210, 70, 500, 450],
-        #          [210, 70, 800, 350],
-        #          [210, 70, 1000, 450],
-        #          [210, 70, 1120, 230],
-        #          [1000, 50, 0, SCREEN_HEIGHT-50],
-        #          [1200, 50, 1400, SCREEN_HEIGHT-50]
-        #          ]
-
-        # Go through the array above and add platforms
-        # for platform in level:
-        #     block = Platform(groundTile)
-        #     # block.rect.x = block.image.get_rect().x
-        #     # block.rect.y = block.image.get_rect().y
-        #     block.rect.x = platform[2]
-        #     block.rect.y = platform[3]
-        #     block.player = self.player
-    #     self.platform_list.add(block)
         
         levelLayout = [ [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 5.0, 0.0, 0.0, 0.0,    0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
                          0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.5, 1.7, 1.7, 1.7, 1.7, 1.7, 1.7, 1.7, 1.7, 1.6, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, ],
@@ -509,6 +500,8 @@ def main():
                 elif event.key == pygame.K_RIGHT:
                    player.go_right()
                 elif event.key == pygame.K_SPACE:
+                   player.jump()
+                elif event.key == pygame.K_RETURN:
                    player.jump()
                 else:
                     movingLeft = False
