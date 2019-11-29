@@ -49,6 +49,10 @@ SCREEN_HEIGHT = 600
 def redrawWindow():
     global walkCount
 
+
+def tick_count():
+    tick = pygame.time.get_ticks()
+    return tick
  
 class Player(pygame.sprite.Sprite):
     """
@@ -214,7 +218,6 @@ class Projectile(pygame.sprite.Sprite): #basic projectile class
         
         self.show(bgColour) #should redraw the previous position as the background colour but doesn't seem to work
         self.x += self.vel
-         
         
         
         
@@ -339,7 +342,7 @@ def main():
     player = Player()
  
     arrows = [] #where the projectiles will be contained
-    
+    arrowtimers = [] # where the tick timers for the arrows will be contained
     
     
     # Create all the levels
@@ -392,9 +395,17 @@ def main():
                 if event.key == pygame.K_SPACE:
                     player.jump()
                 if event.key == pygame.K_RETURN:
-                    if len(arrows) < 3:
-                        arrows.append(Projectile(player.rect.x,player.rect.y))
+                    ticks = tick_count() # calls tick checker and assigns result
+                    if len(arrows) < 1: # first arrow doesn't need checking and also allows list function to work
+                        arrows.append(Projectile(player.rect.x,player.rect.y,)) # creates arrow via a list combined with a for loop on line 442
+                        arrowtimers.append(tick_count()) # creates list of arrow timers
+                    elif ticks > arrowtimers[-1] + 3000 : # compares current time to time of most recent arrow
+                        arrows.append(Projectile(player.rect.x,player.rect.y,))
+                        arrowtimers.append(tick_count())
+                    else:
+                        pass
  
+    
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_LEFT and player.change_x < 0 and player.change_y == 0:
                     for i in range(0,6): #inertia function - loops for amount of times based on standard player speed - could be refactored later
@@ -417,8 +428,9 @@ def main():
             
             
             for arrow in arrows:
-                if arrow.x > 500 or arrow.x < 0: 
-                    arrows.pop(arrows.index(arrow)) #stops projectile once it hits x = 500 but inconsistent currently
+                if arrow.x > 700 or arrow.x < 0: 
+                    arrows.pop(arrows.index(arrow)) #removes projectile once it hits x = 700 but inconsistent currently
+                    arrowtimers.pop() #removes last arrow timer alongside the arrow itself
             
         # Update the player.
         active_sprite_list.update()
@@ -426,8 +438,8 @@ def main():
         # Update items in the level
         current_level.update()
         
-        for arrow in arrows:
-            arrow.show(BLACK)
+        for arrow in arrows: #triggered whenever arrows are created
+            arrow.show(BLACK) 
             arrow.shoot()
     
         # If the player gets near the right side, shift the world left (-x)
