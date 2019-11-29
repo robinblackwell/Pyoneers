@@ -39,6 +39,7 @@ class Player(pygame.sprite.Sprite):
         # Set speed vector of player
         self.change_x = 0
         self.change_y = 0
+        self.direction = 1
  
         # List of sprites we can bump against
         self.level = None
@@ -112,17 +113,19 @@ class Player(pygame.sprite.Sprite):
         self.rect.y -= 2
  
         # If it is ok to jump, set our speed upwards
-        if len(platform_hit_list) > 0 or self.rect.bottom >= SCREEN_HEIGHT:
+        if len(platform_hit_list) > 0:
             self.change_y = -10
  
     # Player-controlled movement:
     def go_left(self):
         """ Called when the user hits the left arrow. """
         self.change_x = -6
+        self.direction = -1
  
     def go_right(self):
         """ Called when the user hits the right arrow. """
         self.change_x = 6
+        self.direction = 1
         
     def go_up(self):
         self.change_y = -6
@@ -134,7 +137,24 @@ class Player(pygame.sprite.Sprite):
         """ Called when the user lets off the keyboard. """
         self.change_x = 0
  
- 
+    
+class Projectile(pygame.sprite.Sprite): #basic projectile class
+    
+    def __init__(self,direction): #taken as player x and y so projectile fires from their position
+      
+        super().__init__()
+        
+        self.image = pygame.Surface([10,10]) # surface, colour,( x, y, width, height)
+        self.image.fill(BLACK)
+        
+        self.rect = self.image.get_rect()
+        
+        self.change_x = direction * 10
+        
+    def update(self):
+        self.rect.x += self.change_x
+    
+    
 class Platform(pygame.sprite.Sprite):
     """ Platform the user can jump on """
  
@@ -329,6 +349,7 @@ class Level():
         self.platform_list = pygame.sprite.Group()
         self.enemy_list = pygame.sprite.Group()
         self.ladder_list = pygame.sprite.Group()
+        self.projectile_list = pygame.sprite.Group()
         self.player = player
  
         # How far this world has been scrolled left/right
@@ -341,6 +362,7 @@ class Level():
         self.platform_list.update()
         self.enemy_list.update()
         self.ladder_list.update()
+        self.projectile_list.update()
  
     def draw(self, screen):
         """ Draw everything on this level. """
@@ -352,6 +374,7 @@ class Level():
         self.platform_list.draw(screen)
         self.enemy_list.draw(screen)
         self.ladder_list.draw(screen)
+        self.projectile_list.draw(screen)
  
     def shift_world(self, shift_x):
         """ When the user moves left/right and we need to scroll
@@ -369,6 +392,9 @@ class Level():
             
         for ladder in self.ladder_list:
             ladder.rect.x += shift_x
+            
+        for projectile in self.projectile_list:
+            projectile.rect.x += shift_x
  
  
 # Create platforms for the level
@@ -513,14 +539,32 @@ def main(current_level_no = 0):
                         player.go_down()
                     if event.key == pygame.K_UP:
                         player.go_up()
-                elif event.key == pygame.K_UP:
+                if event.key == pygame.K_UP:
                     player.jump()
+                if event.key == pygame.K_SPACE:
+                    projectile = Projectile(player.direction)
+                    projectile.rect.x = player.rect.x + 20
+                    projectile.rect.y = player.rect.y + 30
+                    player.level.projectile_list.add(projectile)
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_LEFT and player.change_x < 0:
                     player.stop()
                 if event.key == pygame.K_RIGHT and player.change_x > 0:
                     player.stop()
- 
+
+        # Projectile collision condition
+        for projectile in player.level.projectile_list:
+            if projectile.rect.x > player.rect.x + 470 or projectile.rect.x < player.rect.x - 450:
+                projectile.kill()
+            for enemy in player.level.enemy_list:
+                projectile_enemy_hit = pygame.sprite.spritecollide(projectile, player.level.enemy_list, False)
+                for x in projectile_enemy_hit:
+                    projectile.kill()
+                    enemy.kill()
+            projectile_platform_hit = pygame.sprite.spritecollide(projectile, player.level.platform_list, False)
+            for y in projectile_platform_hit:
+                projectile.kill()
+    
         # Update the player.
         active_sprite_list.update()
  
@@ -553,13 +597,14 @@ def main(current_level_no = 0):
                 done = True
 
         # Player death conditions
-        if player.rect.bottom == SCREEN_HEIGHT:
+        if player.rect.bottom > SCREEN_HEIGHT:
             player.image.fill(BLACK)
-            gameOver = True
+            if player.rect.bottom > SCREEN_HEIGHT + 70:
+                gameOver = True
         for enemy in player.level.enemy_list:
             if pygame.sprite.spritecollide(player, player.level.enemy_list, False):
                 gameOver = True
-
+                    
         while gameOver == True:
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
