@@ -308,7 +308,7 @@ class Level_01(Level):
         #     block.player = self.player
     #     self.platform_list.add(block)
         
-        levelLayout = [ [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 5.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        levelLayout = [ [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 5.0, 0.0, 0.0, 0.0,    0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
                          0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.5, 1.7, 1.7, 1.7, 1.7, 1.7, 1.7, 1.7, 1.7, 1.6, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, ],
                         
                         [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
@@ -444,9 +444,11 @@ def main():
     def redrawWindow():
 
         animatePlayer()
+
         # Define what is drwan on screen
         current_level.drawBg(screen)
         active_sprite_list.draw(screen)
+        # projectile.draw(screen)
         current_level.drawLevel(screen)
         
         # Update items in the level
@@ -532,16 +534,6 @@ def main():
             game_over()
             pygame.quit()
             break
-
-        # If the player gets to the end of the level, go to the next level
-        # current_position = player.rect.x + current_level.world_shift
-        # if current_position < current_level.level_limit:
-        #     player.rect.x = 120
-        #     if current_level_no < len(level_list)-1:
-        #         current_level_no += 1
-        #         current_level = level_list[current_level_no]
-        #         player.level = current_level
-
 
         # ALL CODE TO DRAW SHOULD GO BELOW THIS COMMENT
         userEvents()
