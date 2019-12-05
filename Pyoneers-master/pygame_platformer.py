@@ -36,7 +36,7 @@ font = pygame.font.Font("PressStart2P.ttf", 26)
 text = font.render("You Died. Press 'a' to restart, ", True, (0, 128, 0)) 
 text1_1 = font.render("or 'q' to quit.", True, (0, 128, 0)) 
 text2 = font.render("Welcome. Please click to start", True, (0, 128, 0))
-text3 = font.render("Paused. Press Esc to unpause", True, (0, 128, 0))
+text3 = font.render("Paused. Press 'p' to unpause", True, (0, 128, 0))
 
 intro_done = False
 
@@ -463,6 +463,7 @@ def main():
             diff = leftShift - player.rect.left
             player.rect.left = leftShift
             current_level.shift_world(+diff)
+          
             
         #if player.rect.right > levelLayout[9,4] - 50 and player.rect.right < levelLayout[9,4] - 50: # location based event put with other location based events
          #   signpost()
@@ -495,8 +496,11 @@ def main():
                 elif event.key == pygame.K_q: # quit function
                     pygame.quit()
                     os._exit(0)
-                elif event.key == pygame.K_t:
+                elif event.key == pygame.K_p:
                     pause()
+                    redrawWindow()
+                    unpause()
+                    
                 else:
                     movingLeft = False
                     movingRight = False
@@ -516,24 +520,30 @@ def main():
         player.jump()
 
     def pause(): # a simple pause function to allow the player to temporarily stop the game
-    
+        
+        bg.fill((95, 95, 55))
+        bg.blit(text3,
+        (420 - text3.get_width() // 2, 240 - text3.get_height() // 2))
+
+        
+         
+    def unpause():
+        
+        global bg
+        
         paused = True
         
         while paused == True:
-        
-            bg.fill((95, 95, 55))
-            bg.blit(text3,
-            (420 - text3.get_width() // 2, 240 - text3.get_height() // 2))
-
             
             for event in pygame.event.get():  
               if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_t:
-                    print("t")
-                    break   
+                if event.key == pygame.K_p:
+                    bg = getImage("bg.png")
+                    redrawWindow()
+                    paused = False   
                 else:
                    pass
-               
+        
 
     # Define what happens when player dies
     def game_over():
@@ -544,26 +554,54 @@ def main():
         bg.blit(text1_1,
         (500 - text1_1.get_width() // 2, 340 - text.get_height() // 2))
         
+    def game_over2():
+     
+        global bg
+        
+        over = True
+        
+        while over == True:
+            
+            for event in pygame.event.get():  
+              if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_r:
+                    bg = getImage("bg.png")
+                    redrawWindow()
+                    main()
+                    over = False   
+                elif event.key == pygame.K_q:
+                    pygame.quit()
+                    os._exit(0)
+                else:
+                   continue
+         
+        
 
-    def game_intro(intro_done): #intro screen for when you boot up the game
+    def game_intro(): #intro screen for when you boot up the game
     
-        complete = False
-        while not complete:
+        
         
          
-            bg.fill((55, 55, 55))
-            bg.blit(text2,
-            (420 - text2.get_width() // 2, 240 - text.get_height() // 2))
+       bg.fill((55, 55, 255))
+       bg.blit(text2,
+       (420 - text2.get_width() // 2, 240 - text.get_height() // 2))
             
            
+    def game_intro2():
             
+        global intro_done
+        global bg
+
+        
+        complete = False
+        while not complete:
+    
             for event in pygame.event.get():
                 if event.type == pygame.MOUSEBUTTONDOWN:
-                        bg.fill((55, 55, 255))  
+                        bg = getImage("bg.png")
+                        redrawWindow()  
                         intro_done = True
                         complete = True
-                        print(intro_done)
-                        return True
                 else:
                     continue
             
@@ -573,19 +611,20 @@ def main():
     # -------- Main Program Loop -----------
     while not done:
         
-        #if intro_done == False:
-            #game_intro(intro_done) 
-            #print(intro_done)
-        #else:
-            #pass
+        if intro_done == False:
+            game_intro() 
+            redrawWindow()
+            game_intro2()
+        else:
+            pass
         
     
         
         if player.rect.bottom == SCREEN_HEIGHT or player.rect.bottom <= 0:
             game_over()
-
-            done = True
-        
+            redrawWindow()
+            game_over2()
+                    
         userEvents()
         clock.tick(FPS)
         moveCam(500, 120)
