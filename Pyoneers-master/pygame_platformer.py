@@ -1,16 +1,18 @@
 import pygame
 import os  # vital to fix the mac issue pt1
+from moviepy.editor import VideoFileClip #Module needed to play video.
 
 # Screen dimensions
 SCREEN_WIDTH = 1024
 SCREEN_HEIGHT = 640
 
 pygame.init()
+pygame.mixer.init()
 
 screen = pygame.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])
 
 # Global variables
-FPS = 40
+FPS = 27
 levelLimit = -1000
 
 # Character
@@ -33,10 +35,11 @@ walkCount2 = 0
 
 font = pygame.font.Font("PressStart2P.ttf", 26)  
 
-text = font.render("You Died. Press 'a' to restart, ", True, (0, 128, 0)) 
+text = font.render("You Died. Press 'r' to restart, ", True, (0, 128, 0)) 
 text1_1 = font.render("or 'q' to quit.", True, (0, 128, 0)) 
 text2 = font.render("Welcome. Please click to start", True, (0, 128, 0))
 text3 = font.render("Paused. Press 'p' to unpause", True, (0, 128, 0))
+text4 = font.render("Press space to jump", True, (0, 128, 0))
 
 intro_done = False
 
@@ -44,11 +47,28 @@ intro_done = False
 def getImage(source):
     return pygame.image.load("assets/{}".format(source))
 
+def getSound(source):
+    return pygame.mixer.music.load("assets/audio/{}".format(source))
+
+def playVideo(videoToPlay):
+    global play
+    if play:
+        videoToPlay.preview()
+        play = False
+    else:
+        pass
+
+
+clip = VideoFileClip("assets/intro_game.mp4")
+play = False
+
+# pygame.mixer.music.load("assets/audio/bg_music.ogg")
 
 # Player sprites
 charRight = [getImage("playerRight.png"), getImage("playerRight2.png")]
 charLeft = [getImage("playerLeft.png"), getImage("playerLeft2.png")]
-charStanding = [getImage("playerStanding1.png"), getImage("playerStanding2.png"), getImage("playerStanding3.png"), getImage("playerStanding4.png"), getImage("playerStanding2.png"), getImage("playerStanding5.png"), getImage("playerStanding1.png"), getImage("playerStanding2.png"), getImage("playerStanding3.png"),getImage("playerStanding1.png"), getImage("playerStanding2.png"), getImage("playerStanding3.png")]
+charStanding = [getImage("playerStanding1.png"), getImage("playerStanding2.png"), getImage("playerStanding3.png"), getImage("playerStanding4.png"), getImage("playerStanding2.png"), getImage(
+    "playerStanding5.png"), getImage("playerStanding1.png"), getImage("playerStanding2.png"), getImage("playerStanding3.png"), getImage("playerStanding1.png"), getImage("playerStanding2.png"), getImage("playerStanding3.png")]
 charJump = getImage("playerJump.png")
 charDead = getImage("playerDead.png")
 jumpRight = getImage("jumpRight.png")
@@ -74,8 +94,6 @@ gameIcon = getImage("icon.png")
 pygame.display.set_icon(gameIcon)
 
 
-
-
 class Player(pygame.sprite.Sprite):
     """
     This class represents the player.
@@ -92,7 +110,6 @@ class Player(pygame.sprite.Sprite):
 
         # Set a referance to the image rect.
         self.rect = self.image.get_rect()
-        
 
         # Make player look like it's under the grassZ, move by a few pixels.
         self.rect[3] -= playerBehind
@@ -114,7 +131,8 @@ class Player(pygame.sprite.Sprite):
 
         # See if we hit anything
         blocklist = pygame.sprite
-        block_hit_list = blocklist.spritecollide(self, self.level.platform_list, False)
+        block_hit_list = blocklist.spritecollide(
+            self, self.level.platform_list, False)
         boot_hit = blocklist.spritecollide(self, self.level.bootList, False)
 
         for block in block_hit_list:
@@ -129,7 +147,8 @@ class Player(pygame.sprite.Sprite):
         self.rect.y += self.change_y
 
         # Check and see if we hit anything
-        block_hit_list = blocklist.spritecollide(self, self.level.platform_list, False)
+        block_hit_list = blocklist.spritecollide(
+            self, self.level.platform_list, False)
 
         for block in block_hit_list:
             # Reset our position based on the top/bottom of the object.
@@ -173,13 +192,14 @@ class Player(pygame.sprite.Sprite):
 
         # move down a bit and see if there is a platform below us. Move down 2 pixels because it doesn't work well if we only move down 1 when working with a platform moving down.
         self.rect.y += 1
-        platform_hit_list = pygame.sprite.spritecollide(self, self.level.platform_list, False)
+        platform_hit_list = pygame.sprite.spritecollide(
+            self, self.level.platform_list, False)
         self.rect.y -= 1
-    
-            # If it is ok to jump, set our speed upwards
+
+        # If it is ok to jump, set our speed upwards
         if len(platform_hit_list) > 0 or self.rect.bottom >= SCREEN_HEIGHT:
             self.change_y = jumpHeight
-            # Set player animation for when jumping 
+            # Set player animation for when jumping
             if movingLeft:
                 isJumpLeft = True
             elif movingRight:
@@ -234,6 +254,7 @@ class Platform(pygame.sprite.Sprite):
         def Boots(isBootsOn):
             pass
 
+
 class Level():
     """ This is a generic super-class used to define a level.
         Create a child class for each level with level-specific
@@ -262,13 +283,12 @@ class Level():
         global bgY
         global bgX
         screen.blit(bg, (bgX, bgY))
-        
+
     def drawLevel(self, screen):
         """ Draw everything on this level. """
         # Draw all the sprite lists that we have
         self.item_list.draw(screen)
         self.platform_list.draw(screen)
-        
 
     def shift_world(self, shift_x):
         """ When the user moves left/right and we need to scroll
@@ -285,6 +305,8 @@ class Level():
             item.rect.x += shift_x
 
 # Create platforms for the level
+
+
 class Level_01(Level):
     """ Definition for level 1. """
 
@@ -295,37 +317,37 @@ class Level_01(Level):
         Level.__init__(self, player)
 
         self.level_limit = levelLimit
-        
-        levelLayout = [ 
+
+        levelLayout = [
             [
                 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.5, 1.7, 1.7, 1.7, 1.7, 1.7, 1.7, 1.7, 1.7, 1.6, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, ],
-                        
-            [
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.1, 1.0, 1.0, 1.0, 1.0, 1.0, 1.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  ],
 
             [
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.5, 1.7, 1.7, 1.7, 1.7, 1.7, 1.6, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  ],
-                        
-            [
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 4.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, ],
-                        
-            [
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.1, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, ],
-                        
-            [
-            0.0, 4.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.1, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.5, 1.7, 1.7, 1.7, 1.7, 1.7, 1.7, 1.6, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  ],
+                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.1, 1.0, 1.0, 1.0, 1.0, 1.0, 1.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, ],
 
             [
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.1, 1.2, 0.0, 0.0, 0.0, 1.4, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 1.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 7.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, ],
-                        
+                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.5, 1.7, 1.7, 1.7, 1.7, 1.7, 1.6, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, ],
+
             [
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 3.0, 0.0, 1.1, 1.2, 0.0, 1.1, 1.2, 0.0, 1.5, 1.6, 0.0, 0.0, 0.0, 1.4, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 1.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  ],
-                        
+                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 4.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, ],
+
             [
-            1.1, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.3, 0.0, 1.5, 1.6, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.4, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 1.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 6.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, ],
-                        
+                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.1, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, ],
+
             [
-            1.4, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 1.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.4, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 1.3, 0.0, 0.0, 1.1, 1.0, 1.0, 1.2, 0.0, 1.1, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.1, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.1, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.2, 0.0, 1.1, 1.0, 1.0, 1.2, 0.0, 1.1, 1.0, 1.2, 0.0, 1.1, 1.2, 0.0, 1.1, 1.2, 0.0, 1.1, 1.2, 0.0, 1.1, 1.2, 0.0, 1.1, 1.2, 0.0, 1.1, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, ]
+                0.0, 4.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.1, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.5, 1.7, 1.7, 1.7, 1.7, 1.7, 1.7, 1.6, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, ],
+
+            [
+                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.1, 1.2, 0.0, 0.0, 0.0, 1.4, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 1.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 7.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, ],
+
+            [
+                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 3.0, 0.0, 1.1, 1.2, 0.0, 1.1, 1.2, 0.0, 1.5, 1.6, 0.0, 0.0, 0.0, 1.4, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 1.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, ],
+
+            [
+                1.1, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.3, 0.0, 1.5, 1.6, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.4, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 1.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 6.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, ],
+
+            [
+                1.4, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 1.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.4, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 1.3, 0.0, 0.0, 1.1, 1.0, 1.0, 1.2, 0.0, 1.1, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.1, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.1, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.2, 0.0, 1.1, 1.0, 1.0, 1.2, 0.0, 1.1, 1.0, 1.2, 0.0, 1.1, 1.2, 0.0, 1.1, 1.2, 0.0, 1.1, 1.2, 0.0, 1.1, 1.2, 0.0, 1.1, 1.2, 0.0, 1.1, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, ]
         ]
 
         def updateLevelImages(classType, imageToUpdate, isColladible):
@@ -336,7 +358,7 @@ class Level_01(Level):
                 self.platform_list.add(block)
             elif not isColladible:
                 self.item_list.add(block)
-            
+
         y = 0
         for platform in levelLayout:
             x = 0
@@ -346,17 +368,23 @@ class Level_01(Level):
                 elif tile == 1.1:
                     updateLevelImages(Platform, groundTileCorner, True)
                 elif tile == 1.2:
-                    updateLevelImages(Platform, pygame.transform.flip(groundTileCorner, True, False), True)
+                    updateLevelImages(Platform, pygame.transform.flip(
+                        groundTileCorner, True, False), True)
                 elif tile == 1.3:
-                    updateLevelImages(Platform, pygame.transform.rotate(groundTileTop, -90), True)
+                    updateLevelImages(Platform, pygame.transform.rotate(
+                        groundTileTop, -90), True)
                 elif tile == 1.4:
-                    updateLevelImages(Platform, pygame.transform.rotate(groundTileTop, 90), True)
+                    updateLevelImages(Platform, pygame.transform.rotate(
+                        groundTileTop, 90), True)
                 elif tile == 1.5:
-                    updateLevelImages(Platform, pygame.transform.flip(groundTileCorner, False, True), True)
+                    updateLevelImages(Platform, pygame.transform.flip(
+                        groundTileCorner, False, True), True)
                 elif tile == 1.6:
-                    updateLevelImages(Platform, pygame.transform.flip(groundTileCorner, True, True), True)
+                    updateLevelImages(Platform, pygame.transform.flip(
+                        groundTileCorner, True, True), True)
                 elif tile == 1.7:
-                    updateLevelImages(Platform, pygame.transform.flip(groundTileTop, False, True), True)
+                    updateLevelImages(Platform, pygame.transform.flip(
+                        groundTileTop, False, True), True)
                 elif tile == 2:
                     updateLevelImages(Platform, groundTileInner, True)
                 elif tile == 3:
@@ -364,7 +392,8 @@ class Level_01(Level):
                 elif tile == 4:
                     updateLevelImages(Platform, portal, False)
                 elif tile == 4.1:
-                    updateLevelImages(Platform, pygame.transform.rotate(portal, 90), True)
+                    updateLevelImages(
+                        Platform, pygame.transform.rotate(portal, 90), True)
                 elif tile == 5:
                     updateLevelImages(Platform, vine, False)
                 elif tile == 6:
@@ -373,12 +402,6 @@ class Level_01(Level):
                     updateLevelImages(Platform, house, False)
                 x += 64
             y += 64
-
-
-
-
-
-
 
 
 def main():
@@ -415,7 +438,7 @@ def main():
         current_level.drawBg(screen)
         active_sprite_list.draw(screen)
         current_level.drawLevel(screen)
-        
+
         # Update items in the level
         current_level.update()
         active_sprite_list.update()
@@ -426,7 +449,7 @@ def main():
         global walkCount2
         if walkCount12 + 1 >= 28:
             walkCount12 = 0
-        elif walkCount2 + 1 >=7:
+        elif walkCount2 + 1 >= 7:
             walkCount2 = 0
 
         def setImage(newImage):
@@ -443,16 +466,18 @@ def main():
         elif isJumpRight:
             setImage(jumpRight)
         elif gravityIsNegative:
-            setImage(pygame.transform.flip(charStanding[walkCount12//3], False, True))
+            setImage(pygame.transform.flip(
+                charStanding[walkCount12//3], False, True))
         elif gravityIsNegative and movingLeft:
-            setImage(pygame.transform.flip(charLeft[walkCount2//3], False, True))
+            setImage(pygame.transform.flip(
+                charLeft[walkCount2//3], False, True))
         elif gravityIsNegative and movingRight:
-            setImage(pygame.transform.flip(charRight[walkCount2//3], False, True))
+            setImage(pygame.transform.flip(
+                charRight[walkCount2//3], False, True))
         elif standing:
             setImage(charStanding[walkCount12//3])
             walkCount12 += 1
 
-    # TODO - remove duplication
     def moveCam(rightShift, leftShift):
         if player.rect.right >= rightShift:
             diff = player.rect.right - rightShift
@@ -463,10 +488,12 @@ def main():
             diff = leftShift - player.rect.left
             player.rect.left = leftShift
             current_level.shift_world(+diff)
-          
             
-        #if player.rect.right > levelLayout[9,4] - 50 and player.rect.right < levelLayout[9,4] - 50: # location based event put with other location based events
-         #   signpost()
+        if player.rect.right > (840 + player.level.world_shift) and player.rect.right < (890 + player.level.world_shift) : # location based event put with other location based events
+            signpost()
+        else:
+            signpostend()
+            
 
     def userEvents():
         global movingRight
@@ -498,9 +525,7 @@ def main():
                     os._exit(0)
                 elif event.key == pygame.K_p:
                     pause()
-                    redrawWindow()
                     unpause()
-                    
                 else:
                     movingLeft = False
                     movingRight = False
@@ -515,17 +540,13 @@ def main():
                    player.stop()
 
 
-    def signpost():
-        
-        player.jump()
-
     def pause(): # a simple pause function to allow the player to temporarily stop the game
         
         bg.fill((95, 95, 55))
         bg.blit(text3,
         (420 - text3.get_width() // 2, 240 - text3.get_height() // 2))
 
-        
+        redrawWindow()
          
     def unpause():
         
@@ -540,10 +561,32 @@ def main():
                 if event.key == pygame.K_p:
                     bg = getImage("bg.png")
                     redrawWindow()
-                    paused = False   
+                    player.stop()
+                    paused = False  
+                elif event.key == pygame.K_q:
+                    pygame.quit()
+                    os._exit(0)
                 else:
                    pass
+               
+    def signpost():
         
+        bg.fill((95, 95, 55))
+        bg.blit(text4,
+        (420 - text4.get_width() // 2, 240 - text4.get_height() // 2))
+
+        #bg.blit((getImage(boot1)), 300, 300)
+
+        redrawWindow()
+        
+    def signpostend():  
+        global bg
+        global play
+        if play == False:
+            bg = getImage("bg.png")
+            redrawWindow()
+        else:
+            pass
 
     # Define what happens when player dies
     def game_over():
@@ -574,9 +617,7 @@ def main():
                     os._exit(0)
                 else:
                    continue
-         
-        
-
+               
     def game_intro(): #intro screen for when you boot up the game
     
         
@@ -585,13 +626,15 @@ def main():
        bg.fill((55, 55, 255))
        bg.blit(text2,
        (420 - text2.get_width() // 2, 240 - text.get_height() // 2))
-            
+        
+       redrawWindow()
+       
            
     def game_intro2():
             
         global intro_done
         global bg
-
+        global play
         
         complete = False
         while not complete:
@@ -602,47 +645,45 @@ def main():
                         redrawWindow()  
                         intro_done = True
                         complete = True
+                        play = True
                 else:
                     continue
-            
-       
-    
 
     # -------- Main Program Loop -----------
     while not done:
         
         if intro_done == False:
             game_intro() 
-            redrawWindow()
             game_intro2()
         else:
             pass
-        
-    
         
         if player.rect.bottom == SCREEN_HEIGHT or player.rect.bottom <= 0:
             game_over()
             redrawWindow()
             game_over2()
-                    
+
         userEvents()
         clock.tick(FPS)
         moveCam(500, 120)
+        playVideo(clip)
+        if pygame.mixer.music.get_busy():
+            pass
+        else:
+            pygame.mixer.music.load("assets/audio/bg_music.ogg")
+            pygame.mixer.music.play()
+
         redrawWindow()
-    
-        
-    
-    # vital for mac issue pt2
-    while True:
-        e = pygame.event.poll()
-        if e.type == pygame.QUIT:
-            break
-        
-    
-    
+
+     # vital for mac issue pt2
+    # while True:
+    #     e = pygame.event.poll()
+    #     if e.type == pygame.QUIT:
+    #         break
+
     # vital for the mac issue pt3
     pygame.quit()
-    os._exit(0) 
+    os._exit(0)
 
 
 if __name__ == "__main__":
@@ -654,9 +695,9 @@ if __name__ == "__main__":
 # - Invert gravity when boots are worn.
 # - Add parallax effect to BG.
 # TO ANIMATE:
-    # - Glowing portal 
-    # - Being spit out of portal 
-    # - Vine moving 
+    # - Glowing portal
+    # - Being spit out of portal
+    # - Vine moving
     # - Fireflies
     # - House smoke
 
