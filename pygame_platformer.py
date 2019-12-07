@@ -14,7 +14,7 @@ FPS = 40
 levelLimit = -1000
 
 # Character
-gravity = 3
+gravity = 1.5
 gravityIsNegative = False
 jumpHeight = -27.5
 playerBehind = 9
@@ -176,11 +176,12 @@ class Player(pygame.sprite.Sprite):
         block_hit_list = blocklist.spritecollide(self, self.level.platform_list, False)                
 
         for block in self.level.platform_list:
-            if block.rect.bottom > block.boundary_bottom or block.rect.top < block.boundary_top:
+            cur_pos_y = block.rect.y + self.level.world_shift_y
+            if cur_pos_y > block.boundary_bottom or cur_pos_y < block.boundary_top:
                 block.change_y *= -1
      
-            cur_pos = block.rect.x - self.level.world_shift
-            if cur_pos < block.boundary_left or cur_pos > block.boundary_right:
+            cur_pos_x = block.rect.x - self.level.world_shift_x
+            if cur_pos_x < block.boundary_left or cur_pos_x > block.boundary_right:
                 block.change_x *= -1
 
 
@@ -484,11 +485,13 @@ class Level():
         self.enemy_list = pygame.sprite.Group()
         self.projectile_list = pygame.sprite.Group()
         self.ladder_list = pygame.sprite.Group()
+        self.portal_list = pygame.sprite.Group()
 
         self.player = player
 
         # How far this world has been scrolled left/right
-        self.world_shift = 0
+        self.world_shift_x = 0
+        self.world_shift_y = 0
 
     # Update everythign on this level
     def update(self):
@@ -499,6 +502,7 @@ class Level():
         self.enemy_list.update()
         self.projectile_list.update()
         self.ladder_list.update()
+        self.portal_list.update()
 
     def drawBg(self, screen):
         """ Draw background """
@@ -515,33 +519,45 @@ class Level():
         self.enemy_list.draw(screen)
         self.projectile_list.draw(screen)
         self.ladder_list.draw(screen)
+        self.portal_list.draw(screen)
         
 
-    def shift_world(self, shift_x):
+    def shift_world(self, shift_x, shift_y):
         """ When the user moves left/right and we need to scroll
         everything: """
 
         # Keep track of the shift amount
-        self.world_shift += shift_x
+        self.world_shift_x += shift_x
+        self.world_shift_y += shift_y
 
         # Go through all the sprite lists and shift
         for platform in self.platform_list:
             platform.rect.x += shift_x
+            platform.rect.y += shift_y
 
         for item in self.item_list:
             item.rect.x += shift_x
+            item.rect.y += shift_y
             
         for boot in self.boot_list:
             boot.rect.x += shift_x
+            boot.rect.y += shift_y
             
         for enemy in self.enemy_list:
             enemy.rect.x += shift_x
+            enemy.rect.y += shift_y
             
         for projectile in self.projectile_list:
             projectile.rect.x += shift_x
+            projectile.rect.y += shift_y
         
         for ladder in self.ladder_list:
             ladder.rect.x += shift_x
+            ladder.rect.y += shift_y
+            
+        for portal in self.portal_list:
+            portal.rect.x += shift_x
+            portal.rect.y += shift_y
 
 # Create platforms for the level
 class Level_01(Level):
@@ -552,12 +568,10 @@ class Level_01(Level):
 
         # Call the parent constructor
         Level.__init__(self, player)
-
-        self.level_limit = levelLimit
         
-        levelLayout = [ 
+        levelLayout = [
             [
-                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.5, 1.7, 1.7, 1.7, 1.7, 1.7, 1.7, 1.7, 1.7, 1.6, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, ],
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.5, 1.7, 1.7, 1.7, 1.7, 1.7, 1.7, 1.7, 1.7, 1.6, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, ],
                         
             [
             0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.1, 1.0, 1.0, 1.0, 1.0, 1.0, 1.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  ],
@@ -587,13 +601,15 @@ class Level_01(Level):
             1.4, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 1.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.4, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 1.3, 0.0, 0.0, 1.1, 1.0, 1.0, 1.2, 0.0, 1.1, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.1, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.1, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.2, 0.0, 1.1, 1.0, 1.0, 1.2, 0.0, 1.1, 1.0, 1.2, 0.0, 1.1, 1.2, 0.0, 1.1, 1.2, 0.0, 1.1, 1.2, 0.0, 1.1, 1.2, 0.0, 1.1, 1.2, 0.0, 1.1, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, ]
         ]
 
-        def updateLevelImages(classType, imageToUpdate, isCollidable, isBoot, isLadder, isMoving):
+        def updateLevelImages(classType, imageToUpdate, isCollidable, isBoot, isLadder, isMoving, isPortal):
             if isMoving:
                 block = classType(imageToUpdate, boundary_left = x, boundary_right = x + (3*64), change_x = 1)
             else:
                 block = classType(imageToUpdate)
             block.rect.x += x
             block.rect.y += y
+            if isPortal:
+                self.portal_list.add(block)
             if isBoot:
                 self.boot_list.add(block)
             elif isCollidable:
@@ -605,57 +621,56 @@ class Level_01(Level):
             elif not isCollidable:
                 self.item_list.add(block)
             
-            
         y = 0
         for platform in levelLayout:
             x = 0
             for tile in platform:
                 if tile == 1:
-                    updateLevelImages(Platform, groundTileTop, True, False, False, False)
+                    updateLevelImages(Platform, groundTileTop, True, False, False, False, False)
                 elif tile == 1.1:
-                    updateLevelImages(Platform, groundTileCorner, True, False, False, False)
+                    updateLevelImages(Platform, groundTileCorner, True, False, False, False, False)
                 elif tile == 1.2:
-                    updateLevelImages(Platform, pygame.transform.flip(groundTileCorner, True, False), True, False, False, False)
+                    updateLevelImages(Platform, pygame.transform.flip(groundTileCorner, True, False), True, False, False, False, False)
                 elif tile == 1.3:
-                    updateLevelImages(Platform, pygame.transform.rotate(groundTileTop, -90), True, False, False, False)
+                    updateLevelImages(Platform, pygame.transform.rotate(groundTileTop, -90), True, False, False, False, False)
                 elif tile == 1.4:
-                    updateLevelImages(Platform, pygame.transform.rotate(groundTileTop, 90), True, False, False, False)
+                    updateLevelImages(Platform, pygame.transform.rotate(groundTileTop, 90), True, False, False, False, False)
                 elif tile == 1.5:
-                    updateLevelImages(Platform, pygame.transform.flip(groundTileCorner, False, True), True, False, False, False)
+                    updateLevelImages(Platform, pygame.transform.flip(groundTileCorner, False, True), True, False, False, False, False)
                 elif tile == 1.6:
-                    updateLevelImages(Platform, pygame.transform.flip(groundTileCorner, True, True), True, False, False, False)
+                    updateLevelImages(Platform, pygame.transform.flip(groundTileCorner, True, True), True, False, False, False, False)
                 elif tile == 1.7:
-                    updateLevelImages(Platform, pygame.transform.flip(groundTileTop, False, True), True, False, False, False)
+                    updateLevelImages(Platform, pygame.transform.flip(groundTileTop, False, True), True, False, False, False, False)
                 elif tile == 2:
-                    updateLevelImages(Platform, groundTileInner, True, False, False, False)
+                    updateLevelImages(Platform, groundTileInner, True, False, False, False, False)
                 elif tile == 3:
-                    updateLevelImages(Platform, noticeBoard, False, False, False, False)
+                    updateLevelImages(Platform, noticeBoard, False, False, False, False, False)
                 elif tile == 4:
-                    updateLevelImages(Platform, portal, False, False, False, False)
+                    updateLevelImages(Platform, portal, False, False, False, False, True)
                 elif tile == 4.1:
-                    updateLevelImages(Platform, pygame.transform.rotate(portal, 90), True, False, False, False)
+                    updateLevelImages(Platform, pygame.transform.rotate(portal, 90), True, False, False, False, False)
                 elif tile == 5:
-                    updateLevelImages(Platform, vine, True, False, True, False)
+                    updateLevelImages(Platform, vine, True, False, True, False, False)
                 elif tile == 6:
-                    updateLevelImages(Platform, boot1, True, True, False, False)
+                    updateLevelImages(Platform, boot1, True, True, False, False, False)
                 elif tile == 7:
-                    updateLevelImages(Platform, house, False, False, False, False)
+                    updateLevelImages(Platform, house, False, False, False, False, False)
                 elif tile == 8:
-                    updateLevelImages(Platform, groundTileTop, True, False, False, True)
+                    updateLevelImages(Platform, groundTileTop, True, False, False, True, False)
                 elif tile == 8.1:
-                    updateLevelImages(Platform, groundTileCorner, True, False, False, True)
+                    updateLevelImages(Platform, groundTileCorner, True, False, False, True, False)
                 elif tile == 8.2:
-                    updateLevelImages(Platform, pygame.transform.flip(groundTileCorner, True, False), True, False, False, True)
+                    updateLevelImages(Platform, pygame.transform.flip(groundTileCorner, True, False), True, False, False, True, False)
                 elif tile == 8.3:
-                    updateLevelImages(Platform, pygame.transform.rotate(groundTileTop, -90), True, False, False, True)
+                    updateLevelImages(Platform, pygame.transform.rotate(groundTileTop, -90), True, False, False, True, False)
                 elif tile == 8.4:
-                    updateLevelImages(Platform, pygame.transform.rotate(groundTileTop, 90), True, False, False, True)
+                    updateLevelImages(Platform, pygame.transform.rotate(groundTileTop, 90), True, False, False, True, False)
                 elif tile == 8.5:
-                    updateLevelImages(Platform, pygame.transform.flip(groundTileCorner, False, True), True, False, False, True)
+                    updateLevelImages(Platform, pygame.transform.flip(groundTileCorner, False, True), True, False, False, True, False)
                 elif tile == 8.6:
-                    updateLevelImages(Platform, pygame.transform.flip(groundTileCorner, True, True), True, False, False, True)
+                    updateLevelImages(Platform, pygame.transform.flip(groundTileCorner, True, True), True, False, False, True, False)
                 elif tile == 8.7:
-                    updateLevelImages(Platform, pygame.transform.flip(groundTileTop, False, True), True, False, False, True)
+                    updateLevelImages(Platform, pygame.transform.flip(groundTileTop, False, True), True, False, False, True, False)
                 x += 64
             y += 64
         
@@ -665,6 +680,353 @@ class Level_01(Level):
         enemy01.player = self.player
         enemy01.level = self
         self.enemy_list.add(enemy01)
+        
+
+class Level_02(Level):
+    """ Definition for level 1. """
+
+    def __init__(self, player):
+        """ Create level 1. """
+
+        # Call the parent constructor
+        Level.__init__(self, player)
+        
+        levelLayout = [
+            [
+            2.0, 1.7, 1.7, 1.7, 1.7, 1.7, 1.7, 1.7, 1.7, 1.7, 1.7, 1.7, 1.7, 1.7, 1.7, 2.0, ],
+            
+            [
+            1.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.4, ],
+            
+            [
+            1.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.4, ],
+            
+            [
+            1.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.4, ],
+            
+            [
+            1.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.4, ],
+            
+            [
+            1.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.4, ],
+            
+            [
+            1.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.4, ],
+            
+            [
+            1.3, 0.0, 0.0, 0.0, 0.0, 0.0, 8.0, 8.0, 8.0, 8.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.4, ],
+            
+            [
+            1.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.4, ],
+            
+            [
+            2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, ]  
+        ]
+        
+        def updateLevelImages(classType, imageToUpdate, isCollidable, isBoot, isLadder, isMoving, isPortal):
+            if isMoving:
+                block = classType(imageToUpdate, boundary_left = x, boundary_right = x + (3*64), change_x = 1)
+            else:
+                block = classType(imageToUpdate)
+            block.rect.x += x
+            block.rect.y += y
+            if isPortal:
+                self.portal_list.add(block)
+            if isBoot:
+                self.boot_list.add(block)
+            elif isCollidable:
+                if isLadder:
+                    block.isLadder = True
+                    self.ladder_list.add(block)
+                else:
+                    self.platform_list.add(block)
+            elif not isCollidable:
+                self.item_list.add(block)
+            
+        y = 0
+        for platform in levelLayout:
+            x = 0
+            for tile in platform:
+                if tile == 1:
+                    updateLevelImages(Platform, groundTileTop, True, False, False, False, False)
+                elif tile == 1.1:
+                    updateLevelImages(Platform, groundTileCorner, True, False, False, False, False)
+                elif tile == 1.2:
+                    updateLevelImages(Platform, pygame.transform.flip(groundTileCorner, True, False), True, False, False, False, False)
+                elif tile == 1.3:
+                    updateLevelImages(Platform, pygame.transform.rotate(groundTileTop, -90), True, False, False, False, False)
+                elif tile == 1.4:
+                    updateLevelImages(Platform, pygame.transform.rotate(groundTileTop, 90), True, False, False, False, False)
+                elif tile == 1.5:
+                    updateLevelImages(Platform, pygame.transform.flip(groundTileCorner, False, True), True, False, False, False, False)
+                elif tile == 1.6:
+                    updateLevelImages(Platform, pygame.transform.flip(groundTileCorner, True, True), True, False, False, False, False)
+                elif tile == 1.7:
+                    updateLevelImages(Platform, pygame.transform.flip(groundTileTop, False, True), True, False, False, False, False)
+                elif tile == 2:
+                    updateLevelImages(Platform, groundTileInner, True, False, False, False, False)
+                elif tile == 3:
+                    updateLevelImages(Platform, noticeBoard, False, False, False, False, False)
+                elif tile == 4:
+                    updateLevelImages(Platform, portal, False, False, False, False, True)
+                elif tile == 4.1:
+                    updateLevelImages(Platform, pygame.transform.rotate(portal, 90), True, False, False, False, False)
+                elif tile == 5:
+                    updateLevelImages(Platform, vine, True, False, True, False, False)
+                elif tile == 6:
+                    updateLevelImages(Platform, boot1, True, True, False, False, False)
+                elif tile == 7:
+                    updateLevelImages(Platform, house, False, False, False, False, False)
+                elif tile == 8:
+                    updateLevelImages(Platform, groundTileTop, True, False, False, True, False)
+                elif tile == 8.1:
+                    updateLevelImages(Platform, groundTileCorner, True, False, False, True, False)
+                elif tile == 8.2:
+                    updateLevelImages(Platform, pygame.transform.flip(groundTileCorner, True, False), True, False, False, True, False)
+                elif tile == 8.3:
+                    updateLevelImages(Platform, pygame.transform.rotate(groundTileTop, -90), True, False, False, True, False)
+                elif tile == 8.4:
+                    updateLevelImages(Platform, pygame.transform.rotate(groundTileTop, 90), True, False, False, True, False)
+                elif tile == 8.5:
+                    updateLevelImages(Platform, pygame.transform.flip(groundTileCorner, False, True), True, False, False, True, False)
+                elif tile == 8.6:
+                    updateLevelImages(Platform, pygame.transform.flip(groundTileCorner, True, True), True, False, False, True, False)
+                elif tile == 8.7:
+                    updateLevelImages(Platform, pygame.transform.flip(groundTileTop, False, True), True, False, False, True, False)
+                x += 64
+            y += 64
+
+
+class Level_03(Level):
+    """ Definition for level 1. """
+
+    def __init__(self, player):
+        """ Create level 1. """
+
+        # Call the parent constructor
+        Level.__init__(self, player)
+        
+        levelLayout = [
+            [
+            2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, ],
+            
+            [
+            2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, ], 
+                
+            [
+            2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, ],
+            
+            [
+            2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, ],    
+                
+            [
+            2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 4.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, ],
+                
+            [
+            2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, ],  
+                
+            [
+            2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, ],
+                
+            [
+            2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, ],
+                
+            [
+            2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, ],
+            
+            [
+            2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, ],    
+                
+            [
+            2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, ],
+                
+            [
+            2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, ],
+                
+            [
+            2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, ],
+                
+            [
+            2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, ],
+                
+            [
+            2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, ],    
+                
+            [
+            2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, ],
+                
+            [
+            2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, ],
+                
+            [
+            2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, ],
+                
+            [
+            2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, ],
+                
+            [
+            2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, ],    
+                
+            [
+            2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, ],
+                
+            [
+            2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, ],
+                
+            [
+            2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, ],
+                
+            [
+            2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, ],
+                
+            [
+            2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, ],
+            
+            [
+            2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, ],
+         
+            [
+            2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, ],
+        
+            [
+            2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, ],
+        
+            [
+            2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, ],  
+                
+            [
+            2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, ],
+                
+            [
+            2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, ],
+                
+            [
+            2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, ],
+                
+            [
+            2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, ],
+            
+            [
+            2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, ],
+            
+            [
+            2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, ],
+            
+            [
+            2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, ],
+            
+            [
+            2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, ],
+            
+            [
+            2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, ],
+            
+            [
+            2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, ],
+            
+            [
+            2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, ],
+            
+            [
+            2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, ],
+            
+            [
+            2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, ],
+            
+            [
+            2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, ],
+            
+            [
+            2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, ],
+            
+            [
+            2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 4.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, ],
+            
+            [
+            2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, ],
+            
+            [
+            2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 6.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 2.0, ],
+            
+            [
+            2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, ],
+            
+            [
+            2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, ]
+        ]
+            
+        def updateLevelImages(classType, imageToUpdate, isCollidable, isBoot, isLadder, isMoving, isPortal):
+            if isMoving:
+                block = classType(imageToUpdate, boundary_left = x, boundary_right = x + (3*64), change_x = 1)
+            else:
+                block = classType(imageToUpdate)
+            block.rect.x += x
+            block.rect.y += y
+            if isPortal:
+                self.portal_list.add(block)
+            if isBoot:
+                self.boot_list.add(block)
+            elif isCollidable:
+                if isLadder:
+                    block.isLadder = True
+                    self.ladder_list.add(block)
+                else:
+                    self.platform_list.add(block)
+            elif not isCollidable:
+                self.item_list.add(block)
+            
+        y = 0
+        for platform in levelLayout:
+            x = 0
+            for tile in platform:
+                if tile == 1:
+                    updateLevelImages(Platform, groundTileTop, True, False, False, False, False)
+                elif tile == 1.1:
+                    updateLevelImages(Platform, groundTileCorner, True, False, False, False, False)
+                elif tile == 1.2:
+                    updateLevelImages(Platform, pygame.transform.flip(groundTileCorner, True, False), True, False, False, False, False)
+                elif tile == 1.3:
+                    updateLevelImages(Platform, pygame.transform.rotate(groundTileTop, -90), True, False, False, False, False)
+                elif tile == 1.4:
+                    updateLevelImages(Platform, pygame.transform.rotate(groundTileTop, 90), True, False, False, False, False)
+                elif tile == 1.5:
+                    updateLevelImages(Platform, pygame.transform.flip(groundTileCorner, False, True), True, False, False, False, False)
+                elif tile == 1.6:
+                    updateLevelImages(Platform, pygame.transform.flip(groundTileCorner, True, True), True, False, False, False, False)
+                elif tile == 1.7:
+                    updateLevelImages(Platform, pygame.transform.flip(groundTileTop, False, True), True, False, False, False, False)
+                elif tile == 2:
+                    updateLevelImages(Platform, groundTileInner, True, False, False, False, False)
+                elif tile == 3:
+                    updateLevelImages(Platform, noticeBoard, False, False, False, False, False)
+                elif tile == 4:
+                    updateLevelImages(Platform, portal, False, False, False, False, True)
+                elif tile == 4.1:
+                    updateLevelImages(Platform, pygame.transform.rotate(portal, 90), True, False, False, False, False)
+                elif tile == 5:
+                    updateLevelImages(Platform, vine, True, False, True, False, False)
+                elif tile == 6:
+                    updateLevelImages(Platform, boot1, True, True, False, False, False)
+                elif tile == 7:
+                    updateLevelImages(Platform, house, False, False, False, False, False)
+                elif tile == 8:
+                    updateLevelImages(Platform, groundTileTop, True, False, False, True, False)
+                elif tile == 8.1:
+                    updateLevelImages(Platform, groundTileCorner, True, False, False, True, False)
+                elif tile == 8.2:
+                    updateLevelImages(Platform, pygame.transform.flip(groundTileCorner, True, False), True, False, False, True, False)
+                elif tile == 8.3:
+                    updateLevelImages(Platform, pygame.transform.rotate(groundTileTop, -90), True, False, False, True, False)
+                elif tile == 8.4:
+                    updateLevelImages(Platform, pygame.transform.rotate(groundTileTop, 90), True, False, False, True, False)
+                elif tile == 8.5:
+                    updateLevelImages(Platform, pygame.transform.flip(groundTileCorner, False, True), True, False, False, True, False)
+                elif tile == 8.6:
+                    updateLevelImages(Platform, pygame.transform.flip(groundTileCorner, True, True), True, False, False, True, False)
+                elif tile == 8.7:
+                    updateLevelImages(Platform, pygame.transform.flip(groundTileTop, False, True), True, False, False, True, False)
+                x += 64
+            y += 64
 
 
 def main():
@@ -681,6 +1043,8 @@ def main():
     # Create all the levels
     level_list = []
     level_list.append(Level_01(player))
+    level_list.append(Level_02(player))
+    level_list.append(Level_03(player))
 
     # Set the current level
     current_level_no = 0
@@ -739,17 +1103,27 @@ def main():
             walkCount12 += 1
 
     # TODO - remove duplication
-    def moveCam(rightShift, leftShift):
+    def moveCamHorizontal(rightShift, leftShift):
         if player.rect.right >= rightShift:
-            diff = player.rect.right - rightShift
+            diff_x = player.rect.right - rightShift
             player.rect.right = rightShift
-            current_level.shift_world(-diff)
+            current_level.shift_world(-diff_x,0)
         # If the player gets near the left side, shift the world right (+x)
         if player.rect.left <= leftShift:
-            diff = leftShift - player.rect.left
+            diff_x = leftShift - player.rect.left
             player.rect.left = leftShift
-            current_level.shift_world(+diff)
-
+            current_level.shift_world(+diff_x,0)
+    
+    def moveCamVertical(upShift, downShift):
+        if player.rect.top <= upShift:
+            diff_y = player.rect.top - upShift
+            player.rect.top = upShift
+            current_level.shift_world(0,-diff_y)
+        if player.rect.bottom >= downShift:
+            diff_y = downShift - player.rect.bottom
+            player.rect.bottom = downShift
+            current_level.shift_world(0,+diff_y)
+            
     def userEvents():
         global movingRight
         global movingLeft
@@ -829,10 +1203,35 @@ def main():
             projectile_platform_hit = pygame.sprite.spritecollide(projectile, player.level.platform_list, False)
             for y in projectile_platform_hit:
                 projectile.kill()
+                
+        for portal in player.level.portal_list:
+            portal_hit = pygame.sprite.spritecollide(player, player.level.portal_list, False)
+            if portal_hit:
+                if current_level_no == 0:
+                    player.rect.x = 320
+                    player.rect.y = 128
+                    player.change_y = 0
+                    
+                if current_level_no == 1:
+                    player.rect.x = 1408
+                    player.rect.y = 3008
+                    player.change_y = 0
+                
+                if current_level_no < len(level_list)-1:
+                    current_level_no += 1
+                    current_level = level_list[current_level_no]
+                    player.level = current_level
+                else:
+                    # Out of levels. This just exits the program.
+                    # You'll want to do something better.
+                    done = True
         
         userEvents()
         clock.tick(FPS)
-        moveCam(500, 120)
+        if current_level_no != 1:
+            moveCamHorizontal(500, 120)
+        if current_level_no == 2:
+            moveCamVertical(300, 600)
         redrawWindow()
     
     # vital for mac issue pt2
