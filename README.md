@@ -8,12 +8,18 @@ Before installing the dependencies, [python3](https://www.python.org/downloads/)
 
 ### Project setup
 Install all dependecies:
-	pip3 install .
+```
+pip3 install .
+```
 
-List of dependences:
-- Pygame - Library used to develope games in Python	
-- MoviePy - Lirbary needed to play videos
 
-## Run game
+**List of dependences:**
+- Pygame - *Need to develop games in Python*	
+- MoviePy - *Needed to play videos*
+
+## Runing the game
 After all dependencies have been install
-	python3 nightmare_valley.py
+```
+python3 nightmare_valley.py
+```
+
