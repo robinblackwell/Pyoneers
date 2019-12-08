@@ -190,7 +190,7 @@ class Player(pygame.sprite.Sprite):
     
         enemy_hit_list = pygame.sprite.spritecollide(self, self.level.enemy_list, False)
         for enemy in enemy_hit_list:
-            if enemy.rect.top > self.rect.bottom - 20:
+            if enemy.rect.top > self.rect.bottom - 40:
                 enemy.kill()
                 self.change_y = -20
                 
