@@ -1,6 +1,7 @@
 import pygame
 import os  # vital to fix the mac issue pt1
 from moviepy.editor import VideoFileClip #Module needed to play video.
+import random
 
 # Screen dimensions
 SCREEN_WIDTH = 1024
@@ -30,7 +31,7 @@ FPS = 24
 levelLimit = -1000
 
 # Character
-gravity = 1.5
+gravity = 2.5
 gravityIsNegative = False
 jumpHeight = -27.5
 playerBehind = 9
@@ -46,17 +47,18 @@ standing = True
 isJump = False
 walkCount12 = 0
 walkCount2 = 0
+last_enemy = 0
+kill_count = 0
 
 fontMedium = pygame.font.Font("assets/IBMPlexSerif-Medium.ttf", 22)
 font = pygame.font.Font("assets/IBMPlexSerif-Bold.ttf", 24)
 fontPressStart = pygame.font.Font("assets/PressStart2P.ttf", 26)
 
-text = "You Died. Press 'r' to restart, "
-# text = font.render("You Died. Press 'r' to restart, ", True, (0, 128, 0))
+text = font.render("You Died. Press 'r' to restart, ", True, (0, 128, 0))
 text1_1 = font.render("or 'q' to quit.", True, (0, 128, 0))
 text2 = font.render("Welcome. Please click to start", True, (0, 128, 0))
 text3 = font.render("Paused. Press 'p' to unpause", True, (0, 128, 0))
-welcomeText1 = "Welcome to Nightmare Vally, the place where nightmares are manufactured."
+welcomeText1 = "Welcome to Nightmare Valley, the place where nightmares are manufactured."
 welcomeText2 = "We hope you have a horrible visit <3."
 welcomeText3 = "ps.  Press spacebar to jump."
 bootsText = "ps2.  Press 'a' to invert gravity."
@@ -91,6 +93,7 @@ bg = getImage("bg.png")
 groundTileTop = getImage("ground/groundTile_top.png")
 groundTileInner = getImage("ground/groundTile_inner.png")
 groundTileCorner = getImage("ground/groundTile_corner.png")
+groundTile_platform = getImage("ground/groundTile_platform.png")
 
 boot1 = getImage("boot/boot1.png")
 house = getImage("house.png")
@@ -188,7 +191,7 @@ class Player(pygame.sprite.Sprite):
     
         enemy_hit_list = pygame.sprite.spritecollide(self, self.level.enemy_list, False)
         for enemy in enemy_hit_list:
-            if enemy.rect.top > self.rect.bottom - 20:
+            if enemy.rect.top > self.rect.bottom - 40:
                 enemy.kill()
                 self.change_y = -20
                 
@@ -653,25 +656,12 @@ class Level():
                     self.ladder_list.add(Platform(vine,x,y))
                 elif tile == 6:
                     self.boot_list.add(Platform(boot1,x,y))
-                    self.boot_list.add(Platform(boot1,x,y))
                 elif tile == 7:
                     self.item_list.add(Platform(house,x,y))
                 elif tile == 8:
-                    self.platform_list.add(Platform(groundTileTop,x,y,x,x+(3*64),0,0,1,0))
+                    self.platform_list.add(Platform(groundTile_platform,x,y))
                 elif tile == 8.1:
-                    self.platform_list.add(Platform(groundTileCorner,x,y,x,x+(3*64),0,0,1,0))
-                elif tile == 8.2:
-                    self.platform_list.add(Platform(pygame.transform.flip(groundTileCorner, True, False),x,y,x,x+(3*64),0,0,1,0))
-                elif tile == 8.3:
-                    self.platform_list.add(Platform(pygame.transform.rotate(groundTileTop, -90),x,y,x,x+(3*64),0,0,1,0))
-                elif tile == 8.4:
-                    self.platform_list.add(Platform(pygame.transform.rotate(groundTileTop, 90),x,y,x,x+(3*64),0,0,1,0))
-                elif tile == 8.5:
-                    self.platform_list.add(Platform(pygame.transform.flip(groundTileCorner, False, True),x,y,x,x+(3*64),0,0,1,0))
-                elif tile == 8.6:
-                    self.platform_list.add(Platform(pygame.transform.flip(groundTileCorner, True, True),x,y,x,x+(3*64),0,0,1,0))
-                elif tile == 8.7:
-                    self.platform_list.add(Platform(pygame.transform.flip(groundTileTop, False, True),x,y,x,x+(3*64),0,0,1,0))
+                    self.platform_list.add(Platform(groundTile_platform,x,y,x,x+(3*64),0,0,2,0))
                 x += 64
             y += 64
 
@@ -737,7 +727,7 @@ class Level_03(Level):
         self.addObjects(levelLayout)
 
 
-def main():
+def main(current_level_no = 0):
 
     # Game settings
     # Loop until the user clicks the close button.
@@ -755,14 +745,21 @@ def main():
     level_list.append(Level_03(player))
 
     # Set the current level
-    current_level_no = 0
     current_level = level_list[current_level_no]
 
     active_sprite_list = pygame.sprite.Group()
     player.level = current_level
 
-    player.rect.x = 340
-    player.rect.y = 450
+    if current_level_no == 0:
+        player.rect.x = 340
+        player.rect.y = 450
+    if current_level_no == 1:
+        player.rect.x = 550
+        player.rect.y = 100
+    if current_level_no == 2:
+        player.rect.x = 1408
+        player.rect.y = 3008
+    player.change_y = 0
     active_sprite_list.add(player)
 
     # Displays objects
@@ -808,23 +805,23 @@ def main():
         if movingLeft and not gravityIsNegative:
             setImage(charLeft[walkCount2//3])
             walkCount2 += 1
-        elif movingRight and not gravityIsNegative:
+        if movingRight and not gravityIsNegative:
             setImage(charRight[walkCount2//3])
             walkCount2 += 1
-        elif isJumpLeft:
+        if isJumpLeft:
             setImage(jumpLeft)
-        elif isJumpRight:
+        if isJumpRight:
             setImage(jumpRight)
-        elif gravityIsNegative:
+        if gravityIsNegative:
             setImage(pygame.transform.flip(charStanding[walkCount12//3], False, True))
-        elif gravityIsNegative and movingLeft:
+        if gravityIsNegative and movingLeft:
             setImage(pygame.transform.flip(charLeft[walkCount2//3], False, True))
-        elif gravityIsNegative and movingRight:
+        if gravityIsNegative and movingRight:
             setImage(pygame.transform.flip(charRight[walkCount2//3], False, True))
-        elif standing and not introOn:
+        if standing and not introOn:
             setImage(charStanding[walkCount12//3])
             walkCount12 += 1
-        elif introOn:
+        if introOn:
             setImage(pygame.transform.scale(charStanding[walkCount12//3], (int(player.rect.x * 0.9), int(player.rect.y * 1.5))))
             walkCount12 += 1
 
@@ -873,23 +870,23 @@ def main():
                 if pygame.sprite.spritecollide(player, player.level.ladder_list, False):
                     if event.key == pygame.K_SPACE:
                         player.go_up()
-                elif event.key == pygame.K_LEFT:
+                if event.key == pygame.K_LEFT:
                    player.go_left()
-                elif event.key == pygame.K_RIGHT:
+                if event.key == pygame.K_RIGHT:
                    player.go_right()
-                elif event.key == pygame.K_SPACE:
+                if event.key == pygame.K_SPACE:
                    player.jump()
-                elif event.key == pygame.K_a:
+                if event.key == pygame.K_a:
                    player.invertGravity()
-                elif event.key == pygame.K_r:  # respawn function by calling the main loop over current scenario
-                   main()
-                elif event.key == pygame.K_q:  # quit function
+                if event.key == pygame.K_r:  # respawn function by calling the main loop over current scenario
+                   main(current_level_no)
+                if event.key == pygame.K_q:  # quit function
                     pygame.quit()
                     os._exit(0)
-                elif event.key == pygame.K_p:
+                if event.key == pygame.K_p:
                     pause()
                     unpause()
-                elif event.key == pygame.K_LCTRL:
+                if event.key == pygame.K_LCTRL:
                     if len(player.level.projectile_list) < 1:
                         projectile = Projectile(player.direction)
                         projectile.rect.x = player.rect.x + 12.5
@@ -915,9 +912,7 @@ def main():
                 if event.key == pygame.K_RIGHT and player.change_x > 0:
                    player.stop()
 
-    # Define what happens when player dies
-    def game_over():
-        player.image.blit(charDead, (0, 0))
+
     def pause(): # a simple pause function to allow the player to temporarily stop the game
 
         currentBg.fill((95, 95, 55))
@@ -928,7 +923,7 @@ def main():
 
     def unpause():
         
-        global bg
+        global currentBg
         
         paused = True
         
@@ -937,7 +932,7 @@ def main():
             for event in pygame.event.get():  
               if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_p:
-                    bg = getImage("bg.png")
+                    currentBg = getImage("bg.png")
                     redrawWindow()
                     player.stop()
                     paused = False  
@@ -967,10 +962,13 @@ def main():
                 (500 - text.get_width() // 2, 240 - text.get_height() // 2))
         currentBg.blit(text1_1,
                 (500 - text1_1.get_width() // 2, 340 - text.get_height() // 2))
+        
+        redrawWindow()
+
 
     def game_over2():
 
-        global bg
+        global currentBg
 
         over = True
 
@@ -979,9 +977,9 @@ def main():
             for event in pygame.event.get():
               if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_r:
-                    bg = getImage("bg.png")
+                    currentBg = getImage("bg.png")
                     redrawWindow()
-                    main()
+                    main(current_level_no)
                     over = False
                 elif event.key == pygame.K_q:
                     pygame.quit()
@@ -1007,20 +1005,71 @@ def main():
                         introOn = False
                         play = True
                         currentBg = bg
+                        
+                        
+    def spawn_arena_enemy():
+        
+        global last_enemy
+        global enemy02
+        global kill_count
+      
+        if kill_count < 10:
+        
+            enemy_spawn = random.randint(0,1)
+        
+        
+            if enemy_spawn == 1:
+                enemy02 = Enemy01()
+                enemy02.rect.x = 200
+                enemy02.rect.y = 150
+            else:
+                enemy02 = Enemy02()
+                enemy02.rect.x = 850
+                enemy02.rect.y = 550
+        
+            enemy02.player = player
+            enemy02.level = current_level
+            player.level.enemy_list.add(enemy02)
+        
+        else:
+            enemy03 = Enemy01()
+            enemy04 = Enemy01()
+            enemy05 = Enemy01()
+            
+            enemy03.rect.x = 850
+            enemy03.rect.y = 550
+            enemy03.player = player
+            enemy03.level = current_level
+            player.level.enemy_list.add(enemy03)
+            
+            enemy04.rect.x = 850
+            enemy04.rect.y = 350
+            enemy04.player = player
+            enemy04.level = current_level
+            player.level.enemy_list.add(enemy04)
+            
+            enemy05.rect.x = 850
+            enemy05.rect.y = 150
+            enemy05.player = player
+            enemy05.level = current_level
+            player.level.enemy_list.add(enemy05)
+        
+        
+        last_enemy = pygame.time.get_ticks()
 
     # -------- Main Program Loop -----------
     while not done:
         
         gameIntro()
+        global kill_count
 
         if player.rect.bottom == SCREEN_HEIGHT or player.rect.bottom <= 0:
             game_over()
-            redrawWindow()
             game_over2()
         for enemy in player.level.enemy_list:
             if pygame.sprite.spritecollide(player, player.level.enemy_list, False):
                 game_over()
-                pygame.quit()
+                game_over2()
         
         # Projectile collision condition
         for projectile in player.level.projectile_list:
@@ -1031,6 +1080,7 @@ def main():
                 for x in projectile_enemy_hit:
                     projectile.kill()
                     enemy.kill()
+                    kill_count += 1
             projectile_platform_hit = pygame.sprite.spritecollide(projectile, player.level.platform_list, False)
             for y in projectile_platform_hit:
                 projectile.kill()
@@ -1039,15 +1089,12 @@ def main():
             portal_hit = pygame.sprite.spritecollide(player, player.level.portal_list, False)
             if portal_hit:
                 if current_level_no == 0:
-                    player.rect.x = 320
-                    player.rect.y = 128
-                    player.change_y = 0
-                    
+                    player.rect.x = 550
+                    player.rect.y = 100
                 if current_level_no == 1:
                     player.rect.x = 1408
                     player.rect.y = 3008
-                    player.change_y = 0
-                
+                player.change_y = 0
                 if current_level_no < len(level_list)-1:
                     current_level_no += 1
                     current_level = level_list[current_level_no]
@@ -1056,6 +1103,17 @@ def main():
                     # Out of levels. This just exits the program.
                     # You'll want to do something better.
                     done = True
+        
+        
+        current_time = pygame.time.get_ticks() 
+        if current_level_no == 1:
+           if current_time > last_enemy + 2000:
+               if len(player.level.enemy_list) < 3:
+                spawn_arena_enemy()
+               else:
+                    pass
+           else:
+               pass
         
         userEvents()
         clock.tick(FPS)
@@ -1076,27 +1134,27 @@ def main():
     os._exit(0) 
 
     
-    # Loop until the user clicks the close button.
-    done = False
-
-    # Create the player
-    player = Player()
-
-    # Create all the levels
-    level_list = Level_01(player)
-
-    # Set the current level
-    current_level = level_list
-
-    active_sprite_list = pygame.sprite.Group()
-    player.level = current_level
-
-    player.rect.x = 340
-    player.rect.y = 450
-    active_sprite_list.add(player)
-
-    pygame.quit()
-    os._exit(0)
+#    # Loop until the user clicks the close button.
+#    done = False
+#
+#    # Create the player
+#    player = Player()
+#
+#    # Create all the levels
+#    level_list = Level_01(player)
+#
+#    # Set the current level
+#    current_level = level_list
+#
+#    active_sprite_list = pygame.sprite.Group()
+#    player.level = current_level
+#
+#    player.rect.x = 340
+#    player.rect.y = 450
+#    active_sprite_list.add(player)
+#
+#    pygame.quit()
+#    os._exit(0)
 
 
 if __name__ == "__main__":
