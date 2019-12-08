@@ -47,19 +47,25 @@ isJump = False
 walkCount12 = 0
 walkCount2 = 0
 
-font = pygame.font.Font("assets/PressStart2P.ttf", 26)
+fontMedium = pygame.font.Font("assets/IBMPlexSerif-Medium.ttf", 22)
+font = pygame.font.Font("assets/IBMPlexSerif-Bold.ttf", 24)
+fontPressStart = pygame.font.Font("assets/PressStart2P.ttf", 26)
 
 text = "You Died. Press 'r' to restart, "
 # text = font.render("You Died. Press 'r' to restart, ", True, (0, 128, 0))
 text1_1 = font.render("or 'q' to quit.", True, (0, 128, 0))
 text2 = font.render("Welcome. Please click to start", True, (0, 128, 0))
 text3 = font.render("Paused. Press 'p' to unpause", True, (0, 128, 0))
-welcomeText = "ps. Press spacebar to jump."
-bootsText = "ps. Press 'a' to invert gravity."
+welcomeText1 = "Welcome to Nightmare Vally, the place where nightmares are manufactured."
+welcomeText2 = "We hope you have a horrible visit <3."
+welcomeText3 = "ps.  Press spacebar to jump."
+bootsText = "ps2.  Press 'a' to invert gravity."
 noText = ""
 currentText = text
 
-strList = [welcomeText, bootsText]
+strList = [
+    welcomeText3, bootsText, welcomeText2, welcomeText1
+    ]
 
 introOn = True
 
@@ -273,10 +279,14 @@ class Level():
         self.item_list = spriteGroup()
         self.item_message_list1 = spriteGroup()
         self.item_message_list2 = spriteGroup()
+        self.item_message_list3 = spriteGroup()
+        self.item_message_list4 = spriteGroup()
 
         self.spriteList = [
             self.item_message_list1,
             self.item_message_list2,
+            self.item_message_list3,
+            self.item_message_list4,
             self.platform_list,
             self.item_list,
         ]
@@ -284,6 +294,8 @@ class Level():
         self.message_list = [
             self.item_message_list1,
             self.item_message_list2,
+            self.item_message_list3,
+            self.item_message_list4,
         ]
 
         self.player = player
@@ -317,7 +329,6 @@ class Level():
         TextSurf, TextRect = text_objects()
         TextRect.center = ((SCREEN_WIDTH/2), (SCREEN_HEIGHT/2))
         screen.blit(TextSurf, TextRect)
-        print(TextRect, TextSurf)
 
     def shift_world(self, shift_x):
         """ When the user moves left/right and we need to scroll
@@ -373,7 +384,7 @@ class Level_01(Level):
                 1.1, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.3, 0.0, 1.5, 1.6, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.4, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 1.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 6.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, ],
 
             [
-                1.4, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 1.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.4, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 1.3, 0.0, 0.0, 1.1, 1.0, 1.0, 1.2, 0.0, 1.1, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.1, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.1, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.2, 0.0, 1.1, 1.0, 1.0, 1.2, 0.0, 1.1, 1.0, 1.2, 0.0, 1.1, 1.2, 0.0, 1.1, 1.2, 0.0, 1.1, 1.2, 0.0, 1.1, 1.2, 0.0, 1.1, 1.2, 0.0, 1.1, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, ]
+                1.4, 2.0, 2.0, 2.0, 2.0, 2.1, 2.0, 2.0, 2.0, 2.2, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 1.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.4, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 1.3, 0.0, 0.0, 1.1, 1.0, 1.0, 1.2, 0.0, 1.1, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.1, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.1, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.2, 0.0, 1.1, 1.0, 1.0, 1.2, 0.0, 1.1, 1.0, 1.2, 0.0, 1.1, 1.2, 0.0, 1.1, 1.2, 0.0, 1.1, 1.2, 0.0, 1.1, 1.2, 0.0, 1.1, 1.2, 0.0, 1.1, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, ]
         ]
 
         def updateLevelImages(classType, imageToUpdate, spriteList):
@@ -416,9 +427,14 @@ class Level_01(Level):
                     updateLevelImages(Platform, boot1, self.item_message_list2)
                 elif tile == 7:
                     updateLevelImages(Platform, house, self.item_list)
+                elif tile == 2.1:
+                    updateLevelImages(Platform, groundTileInner, self.item_message_list4)
+                elif tile == 2.2:
+                    updateLevelImages(Platform, groundTileInner, self.item_message_list3)
+                elif tile == 8.1:
+                    updateLevelImages(Platform, groundTileInner, self.item_message_list3)
                 x += 64
             y += 64
-
 
 def main():
 
@@ -426,14 +442,16 @@ def main():
     def redrawWindow():
         global introOn
         global strList
-
+        
+        animatePlayer()
+        
         # Shows intro screen
         if introOn:
             current_level.drawBg(menuBg, screen)
+            active_sprite_list.draw(menuBg)
 
         # Shows game level    
         if not introOn:
-            animatePlayer()
             # Define what is drwan on screen
             current_level.drawBg(currentBg, screen)
             for i in range(len(strList)):
@@ -450,6 +468,8 @@ def main():
     def animatePlayer():
         global walkCount12
         global walkCount2
+        global introOn
+
         if walkCount12 + 1 >= 28:
             walkCount12 = 0
         elif walkCount2 + 1 >= 7:
@@ -469,17 +489,18 @@ def main():
         elif isJumpRight:
             setImage(jumpRight)
         elif gravityIsNegative:
-            setImage(pygame.transform.flip(
-                charStanding[walkCount12//3], False, True))
+            setImage(pygame.transform.flip(charStanding[walkCount12//3], False, True))
         elif gravityIsNegative and movingLeft:
-            setImage(pygame.transform.flip(
-                charLeft[walkCount2//3], False, True))
+            setImage(pygame.transform.flip(charLeft[walkCount2//3], False, True))
         elif gravityIsNegative and movingRight:
-            setImage(pygame.transform.flip(
-                charRight[walkCount2//3], False, True))
-        elif standing:
+            setImage(pygame.transform.flip(charRight[walkCount2//3], False, True))
+        elif standing and not introOn:
             setImage(charStanding[walkCount12//3])
             walkCount12 += 1
+        elif introOn:
+            setImage(pygame.transform.scale(charStanding[walkCount12//3], (int(player.rect.x * 0.9), int(player.rect.y * 1.5))))
+            walkCount12 += 1
+           
 
     def playSound(soundToPlay):
         if pygame.mixer.music.get_busy():
@@ -573,11 +594,8 @@ def main():
                    pass
 
     def showMessage(message, text):
-        global bg
-        global currentBg
         global currentText
         global noText
-        global play
         
         # location based event put with other location based events
         for i in message:
