@@ -1033,9 +1033,9 @@ def main():
                 enemy02.rect.x = 850
                 enemy02.rect.y = 550
         
-        enemy02.player = player
-        enemy02.level = current_level
-        player.level.enemy_list.add(enemy02)
+            enemy02.player = player
+            enemy02.level = current_level
+            player.level.enemy_list.add(enemy02)
         
         else:
             enemy03 = Enemy01()
@@ -1044,9 +1044,21 @@ def main():
             
             enemy03.rect.x = 850
             enemy03.rect.y = 550
-            enemy02.player = player
-        enemy02.level = current_level
-        player.level.enemy_list.add(enemy02)
+            enemy03.player = player
+            enemy03.level = current_level
+            player.level.enemy_list.add(enemy03)
+            
+            enemy04.rect.x = 850
+            enemy04.rect.y = 350
+            enemy04.player = player
+            enemy04.level = current_level
+            player.level.enemy_list.add(enemy04)
+            
+            enemy05.rect.x = 850
+            enemy05.rect.y = 150
+            enemy05.player = player
+            enemy05.level = current_level
+            player.level.enemy_list.add(enemy05)
         
         
         last_enemy = pygame.time.get_ticks()
