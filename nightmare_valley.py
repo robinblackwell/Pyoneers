@@ -479,7 +479,53 @@ class Enemy01(Enemy):
 class Enemy02(Enemy):
 
     # Set speed vector of enemy
-    change_x = -4
+    change_x = -8
+    change_y = 0
+    
+    def update(self):
+        """ Move the enemy. """
+        # Gravity
+        self.calc_grav()
+        
+        self.rect.x += self.change_x
+        
+        # See if we hit anything
+        block_hit_list = pygame.sprite.spritecollide(self, self.level.platform_list, False)
+        for block in block_hit_list:
+            # If we are moving right,
+            # set our right side to the left side of the item we hit
+            if self.change_x > 0:
+                self.rect.right = block.rect.left
+                self.change_x *= -1
+            elif self.change_x < 0:
+                # Otherwise if we are moving left, do the opposite.
+                self.rect.left = block.rect.right
+                self.change_x *= -1
+        
+        self.rect.y += self.change_y
+        # Check and see if we hit anything
+        block_hit_list = pygame.sprite.spritecollide(self, self.level.platform_list, False)
+        for block in block_hit_list:
+ 
+            # Reset our position based on the top/bottom of the object.
+            if self.change_y > 0:
+                self.rect.bottom = block.rect.top
+            elif self.change_y < 0:
+                self.rect.top = block.rect.bottom
+ 
+            # Stop our vertical movement
+            self.change_y = 0
+            
+        block_hit_list = pygame.sprite.spritecollide(self, self.level.platform_list, False)
+        for block in block_hit_list:
+            if block.edge == True:
+                self.change_x *= -1
+                
+                
+class Enemy03(Enemy):
+
+    # Set speed vector of enemy
+    change_x = -1
     change_y = 0
     
     def update(self):
@@ -1018,16 +1064,25 @@ def main():
         global last_enemy
         global enemy02
         global kill_count
+        
       
         if kill_count < 10:
         
-            enemy_spawn = random.randint(0,1)
+            enemy_spawnpoint = random.randint(0,1)
         
         
-            if enemy_spawn == 1:
-                enemy02 = Enemy01()
-                enemy02.rect.x = 200
-                enemy02.rect.y = 150
+            if enemy_spawnpoint == 1:
+                
+                enemy_type = random.randint(0,1)
+                
+                if enemy_type == 1:
+                    enemy02 = Enemy03()
+                    enemy02.rect.x = 200
+                    enemy02.rect.y = 150
+                else:  
+                    enemy02 = Enemy01()
+                    enemy02.rect.x = 200
+                    enemy02.rect.y = 150
             else:
                 enemy02 = Enemy02()
                 enemy02.rect.x = 850
