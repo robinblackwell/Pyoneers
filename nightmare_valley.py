@@ -1096,7 +1096,7 @@ def main():
             if portal_hit:
                 if current_level_no == 0:
                     player.rect.x = 320
-                    player.rect.y = 128
+                    player.rect.y = 328
                     player.change_y = 0
                     
                 if current_level_no == 1:
