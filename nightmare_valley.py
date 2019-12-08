@@ -1,16 +1,33 @@
 import pygame
 import os  # vital to fix the mac issue pt1
+from moviepy.editor import VideoFileClip #Module needed to play video.
 
 # Screen dimensions
 SCREEN_WIDTH = 1024
 SCREEN_HEIGHT = 640
 
 pygame.init()
+pygame.mixer.init()
 
 screen = pygame.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])
 
+clock = pygame.time.Clock()
+pygame.display.set_caption("Pyoneers")
+
+def getImage(source):
+    return pygame.image.load("assets/{}".format(source))
+
+def playVideo(videoToPlay):
+    global play
+    if play:
+        videoToPlay.preview()
+        play = False
+    else:
+        pass
+
 # Global variables
-FPS = 40
+FPS = 24
+levelLimit = -1000
 
 # Character
 gravity = 1.5
@@ -30,26 +47,47 @@ isJump = False
 walkCount12 = 0
 walkCount2 = 0
 
-last_fired = 0
+fontMedium = pygame.font.Font("assets/IBMPlexSerif-Medium.ttf", 22)
+font = pygame.font.Font("assets/IBMPlexSerif-Bold.ttf", 24)
+fontPressStart = pygame.font.Font("assets/PressStart2P.ttf", 26)
 
-tileEdgeList = [groundTileCorner, pygame.transform.flip(groundTileCorner, True, False)]
+text = "You Died. Press 'r' to restart, "
+# text = font.render("You Died. Press 'r' to restart, ", True, (0, 128, 0))
+text1_1 = font.render("or 'q' to quit.", True, (0, 128, 0))
+text2 = font.render("Welcome. Please click to start", True, (0, 128, 0))
+text3 = font.render("Paused. Press 'p' to unpause", True, (0, 128, 0))
+welcomeText1 = "Welcome to Nightmare Vally, the place where nightmares are manufactured."
+welcomeText2 = "We hope you have a horrible visit <3."
+welcomeText3 = "ps.  Press spacebar to jump."
+bootsText = "ps2.  Press 'a' to invert gravity."
+noText = ""
+currentText = text
 
+strList = [
+    welcomeText1, welcomeText2, welcomeText3, bootsText
+    ]
 
-def getImage(source):
-    return pygame.image.load("assets/{}".format(source))
+introOn = True
 
+bgMusic = "assets/audio/bg_music.ogg"
+clip = VideoFileClip("assets/intro_game.mp4")
+play = False
 
 # Player sprites
 charRight = [getImage("playerRight.png"), getImage("playerRight2.png")]
 charLeft = [getImage("playerLeft.png"), getImage("playerLeft2.png")]
-charStanding = [getImage("playerStanding1.png"), getImage("playerStanding2.png"), getImage("playerStanding3.png"), getImage("playerStanding4.png"), getImage("playerStanding2.png"), getImage("playerStanding5.png"), getImage("playerStanding1.png"), getImage("playerStanding2.png"), getImage("playerStanding3.png"),getImage("playerStanding1.png"), getImage("playerStanding2.png"), getImage("playerStanding3.png")]
+charStanding = [getImage("playerStanding1.png"), getImage("playerStanding2.png"), getImage("playerStanding3.png"), getImage("playerStanding4.png"), getImage("playerStanding2.png"), getImage(
+    "playerStanding5.png"), getImage("playerStanding1.png"), getImage("playerStanding2.png"), getImage("playerStanding3.png"), getImage("playerStanding1.png"), getImage("playerStanding2.png"), getImage("playerStanding3.png")]
 charJump = getImage("playerJump.png")
 charDead = getImage("playerDead.png")
 jumpRight = getImage("jumpRight.png")
 jumpLeft = getImage("jumpLeft.png")
 
 # Background
+menuBg = getImage("menu_bg.png")
+currentBg = menuBg
 bg = getImage("bg.png")
+
 groundTileTop = getImage("ground/groundTile_top.png")
 groundTileInner = getImage("ground/groundTile_inner.png")
 groundTileCorner = getImage("ground/groundTile_corner.png")
@@ -84,7 +122,6 @@ class Player(pygame.sprite.Sprite):
 
         # Set a referance to the image rect.
         self.rect = self.image.get_rect()
-        
 
         # Make player look like it's under the grassZ, move by a few pixels.
         self.rect[3] -= playerBehind
@@ -328,9 +365,6 @@ class Platform(pygame.sprite.Sprite):
         
         self.rect.x += x
         self.rect.y += y
-        
-        if tileType in tileEdgeList:
-            self.edge = True
     
     def update(self):
 
@@ -491,16 +525,46 @@ class Level():
         Create a child class for each level with level-specific
         info. """
 
+# TODO
     def __init__(self, player):
         """ Constructor. Pass in a handle to player. Needed for when moving
             platforms collide with the player. """
-        self.platform_list = pygame.sprite.Group()
-        self.item_list = pygame.sprite.Group()
-        self.boot_list = pygame.sprite.Group()
-        self.enemy_list = pygame.sprite.Group()
-        self.projectile_list = pygame.sprite.Group()
-        self.ladder_list = pygame.sprite.Group()
-        self.portal_list = pygame.sprite.Group()
+
+        def spriteGroup():
+            return pygame.sprite.Group()
+
+        self.platform_list = spriteGroup()
+        self.item_list = spriteGroup()
+        self.boot_list = spriteGroup()
+        self.enemy_list = spriteGroup()
+        self.projectile_list = spriteGroup()
+        self.ladder_list = spriteGroup()
+        self.portal_list = spriteGroup()
+        self.item_message_list1 = spriteGroup()
+        self.item_message_list2 = spriteGroup()
+        self.item_message_list3 = spriteGroup()
+        self.item_message_list4 = spriteGroup()
+
+        self.spriteList = [
+            self.platform_list,
+            self.item_list,
+            self.boot_list,
+            self.enemy_list,
+            self.projectile_list,
+            self.ladder_list,
+            self.portal_list,
+            self.item_message_list1,
+            self.item_message_list2,
+            self.item_message_list3,
+            self.item_message_list4,
+        ]
+
+        self.message_list = [
+            self.item_message_list1,
+            self.item_message_list2,
+            self.item_message_list3,
+            self.item_message_list4,
+        ]
 
         self.player = player
 
@@ -508,34 +572,31 @@ class Level():
         self.world_shift_x = 0
         self.world_shift_y = 0
 
-    # Update everythign on this level
     def update(self):
         """ Update everything in this level."""
-        self.item_list.update()
-        self.platform_list.update()
-        self.boot_list.update()
-        self.enemy_list.update()
-        self.projectile_list.update()
-        self.ladder_list.update()
-        self.portal_list.update()
+        for i in range(len(self.spriteList)):
+            self.spriteList[i].update()
+            self.spriteList[i].draw(screen)
 
-    def drawBg(self, screen):
+    def drawBg(self, whatBg, screen):
         """ Draw background """
         global bgY
         global bgX
-        screen.blit(bg, (bgX, bgY))
+        screen.blit(whatBg, (bgX, bgY))
         
-    def drawLevel(self, screen):
-        """ Draw everything on this level. """
-        # Draw all the sprite lists that we have
-        self.item_list.draw(screen)
-        self.platform_list.draw(screen)
-        self.boot_list.draw(screen)
-        self.enemy_list.draw(screen)
-        self.projectile_list.draw(screen)
-        self.ladder_list.draw(screen)
-        self.portal_list.draw(screen)
+    def drawText(self):
+        """ Draw background """
+        global currentText
+
+        def text_objects():
+            textSurface = font.render(currentText, False, (255, 255, 255))
+            return textSurface, textSurface.get_rect()
         
+        text_objects()
+        
+        TextSurf, TextRect = text_objects()
+        TextRect.center = ((SCREEN_WIDTH/2), (SCREEN_HEIGHT/2))
+        screen.blit(TextSurf, TextRect)
 
     def shift_world(self, shift_x, shift_y):
         """ When the user moves left/right and we need to scroll
@@ -546,33 +607,11 @@ class Level():
         self.world_shift_y += shift_y
 
         # Go through all the sprite lists and shift
-        for platform in self.platform_list:
-            platform.rect.x += shift_x
-            platform.rect.y += shift_y
-
-        for item in self.item_list:
-            item.rect.x += shift_x
-            item.rect.y += shift_y
-            
-        for boot in self.boot_list:
-            boot.rect.x += shift_x
-            boot.rect.y += shift_y
-            
-        for enemy in self.enemy_list:
-            enemy.rect.x += shift_x
-            enemy.rect.y += shift_y
-            
-        for projectile in self.projectile_list:
-            projectile.rect.x += shift_x
-            projectile.rect.y += shift_y
-        
-        for ladder in self.ladder_list:
-            ladder.rect.x += shift_x
-            ladder.rect.y += shift_y
-            
-        for portal in self.portal_list:
-            portal.rect.x += shift_x
-            portal.rect.y += shift_y
+        # Go through all the sprite lists and shift
+        for i in range(len(self.spriteList)):
+            for item in self.spriteList[i]:
+             item.rect.x += shift_x
+             item.rect.y += shift_y
             
     def addObjects(self,levelLayout):
         y = 0
@@ -580,7 +619,7 @@ class Level():
             x = 0
             for tile in platform:
                 if tile == 1:
-                    self.platform_list.add(Platform(groundTileTop,x,y))
+                    self.platform_list.add(Platform(groundTileTop, x, y))
                 elif tile == 1.1:
                     self.platform_list.add(Platform(groundTileCorner,x,y))
                 elif tile == 1.2:
@@ -597,8 +636,15 @@ class Level():
                     self.platform_list.add(Platform(pygame.transform.flip(groundTileTop, False, True),x,y))                    
                 elif tile == 2:
                     self.platform_list.add(Platform(groundTileInner,x,y))
+                elif tile == 2.1:
+                    self.item_message_list1.add(Platform(groundTileInner,x,y))
+                elif tile == 2.2:
+                    self.item_message_list2.add(Platform(groundTileInner,x,y))
+                elif tile == 2.3:
+                    self.platform_list.add(Platform(groundTileTop, x, y))
+                    self.item_message_list4.add(Platform(groundTileTop, x, y))
                 elif tile == 3:
-                    self.item_list.add(Platform(noticeBoard,x,y))
+                    self.item_message_list3.add(Platform(noticeBoard, x, y))
                 elif tile == 4:
                     self.portal_list.add(Platform(portal,x,y))
                 elif tile == 4.1:
@@ -606,6 +652,7 @@ class Level():
                 elif tile == 5:
                     self.ladder_list.add(Platform(vine,x,y))
                 elif tile == 6:
+                    self.boot_list.add(Platform(boot1,x,y))
                     self.boot_list.add(Platform(boot1,x,y))
                 elif tile == 7:
                     self.item_list.add(Platform(house,x,y))
@@ -627,7 +674,7 @@ class Level():
                     self.platform_list.add(Platform(pygame.transform.flip(groundTileTop, False, True),x,y,x,x+(3*64),0,0,1,0))
                 x += 64
             y += 64
-        
+
 
 # Create platforms for the level
 class Level_01(Level):
@@ -720,24 +767,39 @@ def main():
 
     # Displays objects
     def redrawWindow():
+        global introOn
+        global strList
 
         animatePlayer()
-        # Define what is drwan on screen
-        current_level.drawBg(screen)
-        active_sprite_list.draw(screen)
-        current_level.drawLevel(screen)
-        
-        # Update items in the level
-        current_level.update()
-        active_sprite_list.update()
+
+        # Shows intro screen
+        if introOn:
+            current_level.drawBg(menuBg, screen)
+            active_sprite_list.draw(menuBg)
+
+        # Shows game level
+        if not introOn:
+            # Define what is drwan on screen
+            current_level.drawBg(currentBg, screen)
+            for i in range(len(strList)):
+                showMessage(current_level.message_list[i], strList[i])
+
+            active_sprite_list.draw(screen)
+
+            # Update items in the level
+            current_level.update()
+            active_sprite_list.update()
+
         pygame.display.flip()
 
     def animatePlayer():
         global walkCount12
         global walkCount2
+        global introOn
+
         if walkCount12 + 1 >= 28:
             walkCount12 = 0
-        elif walkCount2 + 1 >=7:
+        elif walkCount2 + 1 >= 7:
             walkCount2 = 0
 
         def setImage(newImage):
@@ -759,11 +821,13 @@ def main():
             setImage(pygame.transform.flip(charLeft[walkCount2//3], False, True))
         elif gravityIsNegative and movingRight:
             setImage(pygame.transform.flip(charRight[walkCount2//3], False, True))
-        elif standing:
+        elif standing and not introOn:
             setImage(charStanding[walkCount12//3])
             walkCount12 += 1
+        elif introOn:
+            setImage(pygame.transform.scale(charStanding[walkCount12//3], (int(player.rect.x * 0.9), int(player.rect.y * 1.5))))
+            walkCount12 += 1
 
-    # TODO - remove duplication
     def moveCamHorizontal(rightShift, leftShift):
         if player.rect.right >= rightShift:
             diff_x = player.rect.right - rightShift
@@ -784,7 +848,15 @@ def main():
             diff_y = downShift - player.rect.bottom
             player.rect.bottom = downShift
             current_level.shift_world(0,+diff_y)
-            
+
+
+    def playSound(soundToPlay):
+        if pygame.mixer.music.get_busy():
+            pass
+        else:
+            pygame.mixer.music.load(soundToPlay)
+            pygame.mixer.music.play()
+
     def userEvents():
         global movingRight
         global movingLeft
@@ -807,6 +879,16 @@ def main():
                    player.go_right()
                 elif event.key == pygame.K_SPACE:
                    player.jump()
+                elif event.key == pygame.K_a:
+                   player.invertGravity()
+                elif event.key == pygame.K_r:  # respawn function by calling the main loop over current scenario
+                   main()
+                elif event.key == pygame.K_q:  # quit function
+                    pygame.quit()
+                    os._exit(0)
+                elif event.key == pygame.K_p:
+                    pause()
+                    unpause()
                 elif event.key == pygame.K_LCTRL:
                     if len(player.level.projectile_list) < 1:
                         projectile = Projectile(player.direction)
@@ -820,10 +902,6 @@ def main():
                         projectile.rect.y = player.rect.y + 20
                         player.level.projectile_list.add(projectile)
                         last_fired = pygame.time.get_ticks()
-                    else:
-                        pass
-                elif event.key == pygame.K_a:
-                   player.invertGravity()
                 else:
                     movingLeft = False
                     movingRight = False
@@ -840,13 +918,105 @@ def main():
     # Define what happens when player dies
     def game_over():
         player.image.blit(charDead, (0, 0))
+    def pause(): # a simple pause function to allow the player to temporarily stop the game
+
+        currentBg.fill((95, 95, 55))
+        currentBg.blit(text3,
+        (420 - text3.get_width() // 2, 240 - text3.get_height() // 2))
+
+        redrawWindow()
+
+    def unpause():
+        
+        global bg
+        
+        paused = True
+        
+        while paused == True:
+            
+            for event in pygame.event.get():  
+              if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_p:
+                    bg = getImage("bg.png")
+                    redrawWindow()
+                    player.stop()
+                    paused = False  
+                elif event.key == pygame.K_q:
+                    pygame.quit()
+                    os._exit(0)
+                else:
+                   pass
+
+    def showMessage(message, text):
+        global currentText
+        global noText
+        
+        # location based event put with other location based events
+        for i in message:
+            if player.rect.right > (i.rect.x - 100) and player.rect.right < (i.rect.x + 100):
+                currentText = text
+                current_level.drawText()
+            else:
+                currentText = noText
+
+    # Define what happens when player dies
+    def game_over():
+        player.image.blit(charDead, (0, 0))
+        currentBg.fill((100, 100, 100))
+        currentBg.blit(text,
+                (500 - text.get_width() // 2, 240 - text.get_height() // 2))
+        currentBg.blit(text1_1,
+                (500 - text1_1.get_width() // 2, 340 - text.get_height() // 2))
+
+    def game_over2():
+
+        global bg
+
+        over = True
+
+        while over == True:
+
+            for event in pygame.event.get():
+              if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_r:
+                    bg = getImage("bg.png")
+                    redrawWindow()
+                    main()
+                    over = False
+                elif event.key == pygame.K_q:
+                    pygame.quit()
+                    os._exit(0)
+                else:
+                   continue
+    
+    # Intro screen for when you boot up the game
+    def gameIntro(): 
+        global bg
+        global currentBg
+        global menuBg
+        global play
+        global introOn
+
+        if introOn:
+            currentBg = menuBg
+            current_level.drawBg(currentBg, screen)
+            # Checks screen is clicked  
+            for event in pygame.event.get():
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                        bg = getImage("bg.png")
+                        introOn = False
+                        play = True
+                        currentBg = bg
 
     # -------- Main Program Loop -----------
     while not done:
+        
+        gameIntro()
+
         if player.rect.bottom == SCREEN_HEIGHT or player.rect.bottom <= 0:
             game_over()
-            pygame.quit()
-            break
+            redrawWindow()
+            game_over2()
         for enemy in player.level.enemy_list:
             if pygame.sprite.spritecollide(player, player.level.enemy_list, False):
                 game_over()
@@ -893,17 +1063,40 @@ def main():
             moveCamHorizontal(500, 120)
         if current_level_no == 2:
             moveCamVertical(300, 600)
+        
+        playVideo(clip)
+        playSound(bgMusic)
+        # showMessage(current_level.message_list, welcomeText)
+        # showMessage(current_level.item_message_list2, bootsText)
         redrawWindow()
     
-    # vital for mac issue pt2
-    while True:
-        e = pygame.event.poll()
-        if e.type == pygame.QUIT:
-            break
     
     # vital for the mac issue pt3
     pygame.quit()
     os._exit(0) 
+
+    
+    # Loop until the user clicks the close button.
+    done = False
+
+    # Create the player
+    player = Player()
+
+    # Create all the levels
+    level_list = Level_01(player)
+
+    # Set the current level
+    current_level = level_list
+
+    active_sprite_list = pygame.sprite.Group()
+    player.level = current_level
+
+    player.rect.x = 340
+    player.rect.y = 450
+    active_sprite_list.add(player)
+
+    pygame.quit()
+    os._exit(0)
 
 
 if __name__ == "__main__":
