@@ -572,8 +572,7 @@ def main():
     def signpost():
         
         bg.fill((95, 95, 55))
-        bg.blit(text4,
-        (420 - text4.get_width() // 2, 240 - text4.get_height() // 2))
+        bg.blit(text4,(420 - text4.get_width() // 2, 240 - text4.get_height() // 2))
 
         #bg.blit((getImage(boot1)), 300, 300)
 

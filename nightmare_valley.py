@@ -11,8 +11,22 @@ pygame.mixer.init()
 
 screen = pygame.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])
 
+clock = pygame.time.Clock()
+pygame.display.set_caption("Pyoneers")
+
+def getImage(source):
+    return pygame.image.load("assets/{}".format(source))
+
+def playVideo(videoToPlay):
+    global play
+    if play:
+        videoToPlay.preview()
+        play = False
+    else:
+        pass
+
 # Global variables
-FPS = 27
+FPS = 40
 levelLimit = -1000
 
 # Character
@@ -33,26 +47,23 @@ isJump = False
 walkCount12 = 0
 walkCount2 = 0
 
+font = pygame.font.Font("assets/PressStart2P.ttf", 26)
 
-def getImage(source):
-    return pygame.image.load("assets/{}".format(source))
+text = "You Died. Press 'r' to restart, "
+# text = font.render("You Died. Press 'r' to restart, ", True, (0, 128, 0))
+text1_1 = font.render("or 'q' to quit.", True, (0, 128, 0))
+text2 = font.render("Welcome. Please click to start", True, (0, 128, 0))
+text3 = font.render("Paused. Press 'p' to unpause", True, (0, 128, 0))
+welcomeText = "ps. Press spacebar to jump."
+bootsText = "ps. Press 'a' to invert gravity."
+noText = ""
+currentText = text
 
-def getSound(source):
-    return pygame.mixer.music.load("assets/audio/{}".format(source))
+introOn = True
 
-def playVideo(videoToPlay):
-    global play
-    if play:
-        videoToPlay.preview()
-        play = False
-    else:
-        pass
-
-
+bgMusic = "assets/audio/bg_music.ogg"
 clip = VideoFileClip("assets/intro_game.mp4")
-play = True
-
-# pygame.mixer.music.load("assets/audio/bg_music.ogg")
+play = False
 
 # Player sprites
 charRight = [getImage("playerRight.png"), getImage("playerRight2.png")]
@@ -65,7 +76,10 @@ jumpRight = getImage("jumpRight.png")
 jumpLeft = getImage("jumpLeft.png")
 
 # Background
+menuBg = getImage("menu_bg.png")
+currentBg = menuBg
 bg = getImage("bg.png")
+
 groundTileTop = getImage("ground/groundTile_top.png")
 groundTileInner = getImage("ground/groundTile_inner.png")
 groundTileCorner = getImage("ground/groundTile_corner.png")
@@ -123,7 +137,6 @@ class Player(pygame.sprite.Sprite):
         blocklist = pygame.sprite
         block_hit_list = blocklist.spritecollide(
             self, self.level.platform_list, False)
-        boot_hit = blocklist.spritecollide(self, self.level.bootList, False)
 
         for block in block_hit_list:
             # If we are moving right, set our right side to the left side of the item we hit
@@ -189,7 +202,7 @@ class Player(pygame.sprite.Sprite):
         # If it is ok to jump, set our speed upwards
         if len(platform_hit_list) > 0 or self.rect.bottom >= SCREEN_HEIGHT:
             self.change_y = jumpHeight
-            # Set player animation for when jumping
+            # Set player animation when jumping
             if movingLeft:
                 isJumpLeft = True
             elif movingRight:
@@ -241,9 +254,6 @@ class Platform(pygame.sprite.Sprite):
         # Set a referance to the image rect.
         self.rect = self.image.get_rect()
 
-        def Boots(isBootsOn):
-            pass
-
 
 class Level():
     """ This is a generic super-class used to define a level.
@@ -253,9 +263,26 @@ class Level():
     def __init__(self, player):
         """ Constructor. Pass in a handle to player. Needed for when moving
             platforms collide with the player. """
-        self.platform_list = pygame.sprite.Group()
-        self.item_list = pygame.sprite.Group()
-        self.bootList = pygame.sprite.Group()
+        
+        def spriteGroup():
+            return pygame.sprite.Group()
+
+        self.platform_list = spriteGroup()
+        self.item_list = spriteGroup()
+        self.item_message_list1 = spriteGroup()
+        self.item_message_list2 = spriteGroup()
+
+        self.spriteList = [
+            self.item_message_list1,
+            self.item_message_list2,
+            self.platform_list,
+            self.item_list,
+        ]
+
+        self.message_list = [
+            self.item_message_list1,
+            self.item_message_list2,
+        ]
 
         self.player = player
 
@@ -265,26 +292,30 @@ class Level():
     # Update everythign on this level
     def update(self):
         """ Update everything in this level."""
-        self.item_list.update()
-        self.platform_list.update()
+        for i in range(len(self.spriteList)):
+            self.spriteList[i].update()
+            self.spriteList[i].draw(screen)
 
-    def drawBg(self, screen):
+    def drawBg(self, whatBg, screen):
         """ Draw background """
         global bgY
         global bgX
-        screen.blit(bg, (bgX, bgY))
-
-    def drawBg2(self, screen):
+        screen.blit(whatBg, (bgX, bgY))
+        
+    def drawText(self):
         """ Draw background """
-        global bgY
-        global bgX
-        screen.blit(bg2, (bgX, bgY))
+        global currentText
 
-    def drawLevel(self, screen):
-        """ Draw everything on this level. """
-        # Draw all the sprite lists that we have
-        self.item_list.draw(screen)
-        self.platform_list.draw(screen)
+        def text_objects():
+            textSurface = font.render(currentText, False, (255, 255, 255))
+            return textSurface, textSurface.get_rect()
+        
+        text_objects()
+        
+        TextSurf, TextRect = text_objects()
+        TextRect.center = ((SCREEN_WIDTH/2), (SCREEN_HEIGHT/2))
+        screen.blit(TextSurf, TextRect)
+        print(TextRect, TextSurf)
 
     def shift_world(self, shift_x):
         """ When the user moves left/right and we need to scroll
@@ -294,15 +325,12 @@ class Level():
         self.world_shift += shift_x
 
         # Go through all the sprite lists and shift
-        for platform in self.platform_list:
-            platform.rect.x += shift_x
+        for i in range(len(self.spriteList)):
+            for item in self.spriteList[i]: 
+             item.rect.x += shift_x
 
-        for item in self.item_list:
-            item.rect.x += shift_x
 
 # Create platforms for the level
-
-
 class Level_01(Level):
     """ Definition for level 1. """
 
@@ -346,99 +374,74 @@ class Level_01(Level):
                 1.4, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 1.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.4, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 1.3, 0.0, 0.0, 1.1, 1.0, 1.0, 1.2, 0.0, 1.1, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.1, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.1, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.2, 0.0, 1.1, 1.0, 1.0, 1.2, 0.0, 1.1, 1.0, 1.2, 0.0, 1.1, 1.2, 0.0, 1.1, 1.2, 0.0, 1.1, 1.2, 0.0, 1.1, 1.2, 0.0, 1.1, 1.2, 0.0, 1.1, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, ]
         ]
 
-        def updateLevelImages(classType, imageToUpdate, isColladible):
+        def updateLevelImages(classType, imageToUpdate, spriteList):
             block = classType(imageToUpdate)
             block.rect.x += x
             block.rect.y += y
-            if isColladible:
-                self.platform_list.add(block)
-            elif not isColladible:
-                self.item_list.add(block)
+            spriteList.add(block)
 
         y = 0
         for platform in levelLayout:
             x = 0
             for tile in platform:
                 if tile == 1:
-                    updateLevelImages(Platform, groundTileTop, True)
+                    updateLevelImages(Platform, groundTileTop, self.platform_list)
                 elif tile == 1.1:
-                    updateLevelImages(Platform, groundTileCorner, True)
+                    updateLevelImages(Platform, groundTileCorner, self.platform_list)
                 elif tile == 1.2:
-                    updateLevelImages(Platform, pygame.transform.flip(
-                        groundTileCorner, True, False), True)
+                    updateLevelImages(Platform, pygame.transform.flip(groundTileCorner, True, False), self.platform_list)
                 elif tile == 1.3:
-                    updateLevelImages(Platform, pygame.transform.rotate(
-                        groundTileTop, -90), True)
+                    updateLevelImages(Platform, pygame.transform.rotate(groundTileTop, -90), self.platform_list)
                 elif tile == 1.4:
-                    updateLevelImages(Platform, pygame.transform.rotate(
-                        groundTileTop, 90), True)
+                    updateLevelImages(Platform, pygame.transform.rotate(groundTileTop, 90), self.platform_list)
                 elif tile == 1.5:
-                    updateLevelImages(Platform, pygame.transform.flip(
-                        groundTileCorner, False, True), True)
+                    updateLevelImages(Platform, pygame.transform.flip(groundTileCorner, False, True), self.platform_list)
                 elif tile == 1.6:
-                    updateLevelImages(Platform, pygame.transform.flip(
-                        groundTileCorner, True, True), True)
+                    updateLevelImages(Platform, pygame.transform.flip(groundTileCorner, True, True), self.platform_list)
                 elif tile == 1.7:
-                    updateLevelImages(Platform, pygame.transform.flip(
-                        groundTileTop, False, True), True)
+                    updateLevelImages(Platform, pygame.transform.flip(groundTileTop, False, True), self.platform_list)
                 elif tile == 2:
-                    updateLevelImages(Platform, groundTileInner, True)
+                    updateLevelImages(Platform, groundTileInner, self.platform_list)
                 elif tile == 3:
-                    updateLevelImages(Platform, noticeBoard, False)
+                    updateLevelImages(Platform, noticeBoard, self.item_message_list1)
                 elif tile == 4:
-                    updateLevelImages(Platform, portal, False)
+                    updateLevelImages(Platform, portal, self.item_list)
                 elif tile == 4.1:
-                    updateLevelImages(
-                        Platform, pygame.transform.rotate(portal, 90), True)
+                    updateLevelImages(Platform, pygame.transform.rotate(portal, 90), self.platform_list)
                 elif tile == 5:
-                    updateLevelImages(Platform, vine, False)
+                    updateLevelImages(Platform, vine, self.item_list)
                 elif tile == 6:
-                    updateLevelImages(Platform, boot1, False)
+                    updateLevelImages(Platform, boot1, self.item_message_list2)
                 elif tile == 7:
-                    updateLevelImages(Platform, house, False)
+                    updateLevelImages(Platform, house, self.item_list)
                 x += 64
             y += 64
 
 
 def main():
 
-    # Game settings
-    # Loop until the user clicks the close button.
-    done = False
-    clock = pygame.time.Clock()
-    pygame.display.set_caption("Pyoneers")
-
-    # Create the player
-    player = Player()
-
-    # Create all the levels
-    level_list = []
-    level_list.append(Level_01(player))
-
-    # Set the current level
-    current_level_no = 0
-    current_level = level_list[current_level_no]
-
-    active_sprite_list = pygame.sprite.Group()
-    player.level = current_level
-
-    player.rect.x = 340
-    player.rect.y = 450
-    active_sprite_list.add(player)
-
     # Displays objects
     def redrawWindow():
+        global introOn
+        
+        # Shows intro screen
+        if introOn:
+            current_level.drawBg(menuBg, screen)
 
-        animatePlayer()
-        # Define what is drwan on screen
-        current_level.drawBg(screen)
-        current_level.drawBg2(screen)
-        active_sprite_list.draw(screen)
-        current_level.drawLevel(screen)
+        # Shows game level    
+        if not introOn:
+            animatePlayer()
+            # Define what is drwan on screen
+            current_level.drawBg(currentBg, screen)
+            showMessage(current_level.item_message_list1, welcomeText)
+            showMessage(current_level.item_message_list2, bootsText)
+            # current_level.drawText()
+            active_sprite_list.draw(screen)
 
-        # Update items in the level
-        current_level.update()
-        active_sprite_list.update()
+            # Update items in the level
+            current_level.update()
+            active_sprite_list.update()
+        
         pygame.display.flip()
 
     def animatePlayer():
@@ -475,6 +478,13 @@ def main():
             setImage(charStanding[walkCount12//3])
             walkCount12 += 1
 
+    def playSound(soundToPlay):
+        if pygame.mixer.music.get_busy():
+            pass
+        else:
+            pygame.mixer.music.load(soundToPlay)
+            pygame.mixer.music.play()
+
     def moveCam(rightShift, leftShift):
         if player.rect.right >= rightShift:
             diff = player.rect.right - rightShift
@@ -509,6 +519,14 @@ def main():
                 elif event.key == pygame.K_a:
                    player.invertGravity()
                    player.jump()
+                elif event.key == pygame.K_r: #respawn function by calling the main loop over current scenario
+                   main()
+                elif event.key == pygame.K_q: # quit function
+                    pygame.quit()
+                    os._exit(0)
+                elif event.key == pygame.K_p:
+                    pause()
+                    unpause()
                 else:
                     movingLeft = False
                     movingRight = False
@@ -522,27 +540,140 @@ def main():
                 if event.key == pygame.K_RIGHT and player.change_x > 0:
                    player.stop()
 
+    def pause(): # a simple pause function to allow the player to temporarily stop the game
+
+        currentBg.fill((95, 95, 55))
+        currentBg.blit(text3,
+        (420 - text3.get_width() // 2, 240 - text3.get_height() // 2))
+
+        redrawWindow()
+
+    def unpause():
+        
+        global bg
+        
+        paused = True
+        
+        while paused == True:
+            
+            for event in pygame.event.get():  
+              if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_p:
+                    bg = getImage("bg.png")
+                    redrawWindow()
+                    player.stop()
+                    paused = False  
+                elif event.key == pygame.K_q:
+                    pygame.quit()
+                    os._exit(0)
+                else:
+                   pass
+
+    def showMessage(message, text):
+        global bg
+        global currentBg
+        global currentText
+        global noText
+        global play
+        
+        # location based event put with other location based events
+
+        for i in message:
+            if player.rect.right > (i.rect.x - 100) and player.rect.right < (i.rect.x + 100):
+                currentText = text
+                current_level.drawText()
+            else:
+                currentText = noText
+        # print(currentText)
+
     # Define what happens when player dies
     def game_over():
         player.image.blit(charDead, (0, 0))
+        currentBg.fill((100, 100, 100))
+        currentBg.blit(text,
+                (500 - text.get_width() // 2, 240 - text.get_height() // 2))
+        currentBg.blit(text1_1,
+                (500 - text1_1.get_width() // 2, 340 - text.get_height() // 2))
+
+    def game_over2():
+
+        global bg
+
+        over = True
+
+        while over == True:
+
+            for event in pygame.event.get():
+              if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_r:
+                    bg = getImage("bg.png")
+                    redrawWindow()
+                    main()
+                    over = False
+                elif event.key == pygame.K_q:
+                    pygame.quit()
+                    os._exit(0)
+                else:
+                   continue
+    
+    # Intro screen for when you boot up the game
+    def gameIntro(): 
+        global bg
+        global currentBg
+        global menuBg
+        global play
+        global introOn
+
+        if introOn:
+            currentBg = menuBg
+            current_level.drawBg(currentBg, screen)
+            # Checks screen is clicked  
+            for event in pygame.event.get():
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                        bg = getImage("bg.png")
+                        introOn = False
+                        play = True
+                        currentBg = bg
+
+    
+    # Loop until the user clicks the close button.
+    done = False
+
+    # Create the player
+    player = Player()
+
+    # Create all the levels
+    level_list = Level_01(player)
+
+    # Set the current level
+    current_level = level_list
+
+    active_sprite_list = pygame.sprite.Group()
+    player.level = current_level
+
+    player.rect.x = 340
+    player.rect.y = 450
+    active_sprite_list.add(player)
 
     # -------- Main Program Loop -----------
     while not done:
+        
+        gameIntro()
+
+        # print(Level_01(player).item_list.)
+
         if player.rect.bottom == SCREEN_HEIGHT or player.rect.bottom <= 0:
             game_over()
-            pygame.quit()
-            break
+            redrawWindow()
+            game_over2()
 
         userEvents()
         clock.tick(FPS)
         moveCam(500, 120)
         playVideo(clip)
-        if pygame.mixer.music.get_busy():
-            pass
-        else:
-            pygame.mixer.music.load("assets/audio/bg_music.ogg")
-            pygame.mixer.music.play()
-
+        playSound(bgMusic)
+        # showMessage(current_level.message_list, welcomeText)
+        # showMessage(current_level.item_message_list2, bootsText)
         redrawWindow()
 
     # # vital for mac issue pt2
@@ -561,16 +692,13 @@ if __name__ == "__main__":
 
 
 # TODO
-# - Add boots to game.
-# - Invert gravity when boots are worn.
-# - Add parallax effect to BG.
-# TO ANIMATE:
-    # - Glowing portal
-    # - Being spit out of portal
-    # - Vine moving
-    # - Fireflies
-    # - House smoke
-
-
-# https: // www.youtube.com/watch?v = UdsNBIzsmlI
-# https: // www.youtube.com/watch?v = HCWI2f7tQnY
+    # - Add boots to game.
+    # - Invert gravity when boots are worn.
+    # - Add parallax effect to BG.
+    # TO ANIMATE:
+        # - Glowing portal
+        # - Being spit out of portal
+        # - Vine moving
+        # - Fireflies
+        # - House smoke
+    # https://www.youtube.com/watch?v=UdsNBIzsmlI
