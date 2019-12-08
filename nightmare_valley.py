@@ -59,6 +59,8 @@ bootsText = "ps. Press 'a' to invert gravity."
 noText = ""
 currentText = text
 
+strList = [welcomeText, bootsText]
+
 introOn = True
 
 bgMusic = "assets/audio/bg_music.ogg"
@@ -423,7 +425,8 @@ def main():
     # Displays objects
     def redrawWindow():
         global introOn
-        
+        global strList
+
         # Shows intro screen
         if introOn:
             current_level.drawBg(menuBg, screen)
@@ -433,9 +436,9 @@ def main():
             animatePlayer()
             # Define what is drwan on screen
             current_level.drawBg(currentBg, screen)
-            showMessage(current_level.item_message_list1, welcomeText)
-            showMessage(current_level.item_message_list2, bootsText)
-            # current_level.drawText()
+            for i in range(len(strList)):
+                showMessage(current_level.message_list[i], strList[i])
+
             active_sprite_list.draw(screen)
 
             # Update items in the level
@@ -577,14 +580,12 @@ def main():
         global play
         
         # location based event put with other location based events
-
         for i in message:
             if player.rect.right > (i.rect.x - 100) and player.rect.right < (i.rect.x + 100):
                 currentText = text
                 current_level.drawText()
             else:
                 currentText = noText
-        # print(currentText)
 
     # Define what happens when player dies
     def game_over():
