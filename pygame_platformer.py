@@ -11,7 +11,6 @@ screen = pygame.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])
 
 # Global variables
 FPS = 40
-levelLimit = -1000
 
 # Character
 gravity = 1.5
@@ -32,6 +31,8 @@ walkCount12 = 0
 walkCount2 = 0
 
 last_fired = 0
+
+tileEdgeList = [groundTileCorner, pygame.transform.flip(groundTileCorner, True, False)]
 
 
 def getImage(source):
@@ -65,8 +66,6 @@ bgX = 0
 # Game icon
 gameIcon = getImage("icon.png")
 pygame.display.set_icon(gameIcon)
-
-
 
 
 class Player(pygame.sprite.Sprite):
@@ -119,6 +118,14 @@ class Player(pygame.sprite.Sprite):
                 # Otherwise if we are moving left, do the opposite.
                 self.rect.left = block.rect.right
         
+#        for block in block_hit_list:
+#            # If we are moving right, set our right side to the left side of the item we hit
+#            if block.change_x < 0:
+#                self.rect.right = block.rect.left
+#            elif block.change_x > 0:
+#                # Otherwise if we are moving left, do the opposite.
+#                self.rect.left = block.rect.right
+        
         boot_hit = blocklist.spritecollide(self, self.level.boot_list, False)
         for boot in boot_hit:
             boot.kill()
@@ -148,30 +155,30 @@ class Player(pygame.sprite.Sprite):
                 enemy.kill()
                 self.change_y = -20
                 
-        block_hit_list = blocklist.spritecollide(self, self.level.platform_list, False)
-
-        for block in block_hit_list:
-            # Reset our position based on the left/right of the object.
-            if block.change_x < 0:
-                self.rect.right = block.rect.left
-            else:
-                # Otherwise if we are moving left, do the opposite.
-                self.rect.left = block.rect.right
-        
-        block_hit_list = blocklist.spritecollide(self, self.level.platform_list, False)
-
-        for block in block_hit_list:
-            if block.change_x != 0:
-                if block.change_y < 0:
-                    self.rect.bottom = block.rect.top
-                else:
-                    self.rect.top = block.rect.bottom
-        
-        block_hit_list = blocklist.spritecollide(self, self.level.platform_list, False)
-
-        for block in block_hit_list:
-            if self.rect.bottom == block.rect.top:
-                self.change_x += block.rect.x
+#        block_hit_list = blocklist.spritecollide(self, self.level.platform_list, False)
+#
+#        for block in block_hit_list:
+#            # Reset our position based on the left/right of the object.
+#            if block.change_x < 0:
+#                self.rect.right = block.rect.left
+#            else:
+#                # Otherwise if we are moving left, do the opposite.
+#                self.rect.left = block.rect.right
+#        
+#        block_hit_list = blocklist.spritecollide(self, self.level.platform_list, False)
+#
+#        for block in block_hit_list:
+#            if block.change_x != 0:
+#                if block.change_y < 0:
+#                    self.rect.bottom = block.rect.top
+#                else:
+#                    self.rect.top = block.rect.bottom
+#        
+#        block_hit_list = blocklist.spritecollide(self, self.level.platform_list, False)
+#
+#        for block in block_hit_list:
+#            if self.rect.bottom == block.rect.top:
+#                self.change_x += block.rect.x
                 
         block_hit_list = blocklist.spritecollide(self, self.level.platform_list, False)                
 
@@ -208,13 +215,12 @@ class Player(pygame.sprite.Sprite):
         global gravityIsNegative
         
         if self.hasBoot == True:
+            gravity *= -1
             if not gravityIsNegative:
-                gravity *= -1
                 gravityIsNegative = True
+                self.jump()
             elif gravityIsNegative:
-                gravity *= +1
                 gravityIsNegative = False
-            self.jump()
         else:
             pass
 
@@ -322,6 +328,9 @@ class Platform(pygame.sprite.Sprite):
         
         self.rect.x += x
         self.rect.y += y
+        
+        if tileType in tileEdgeList:
+            self.edge = True
     
     def update(self):
 
@@ -451,9 +460,11 @@ class Enemy02(Enemy):
             # set our right side to the left side of the item we hit
             if self.change_x > 0:
                 self.rect.right = block.rect.left
+                self.change_x *= -1
             elif self.change_x < 0:
                 # Otherwise if we are moving left, do the opposite.
                 self.rect.left = block.rect.right
+                self.change_x *= -1
         
         self.rect.y += self.change_y
         # Check and see if we hit anything
@@ -468,6 +479,11 @@ class Enemy02(Enemy):
  
             # Stop our vertical movement
             self.change_y = 0
+            
+        block_hit_list = pygame.sprite.spritecollide(self, self.level.platform_list, False)
+        for block in block_hit_list:
+            if block.edge == True:
+                self.change_x *= -1
 
 
 class Level():
@@ -626,12 +642,19 @@ class Level_01(Level):
         from level_01_layout import levelLayout
         self.addObjects(levelLayout)
         
-        enemy01 = Enemy01()
-        enemy01.rect.x = 750
-        enemy01.rect.y = 450
-        enemy01.player = self.player
-        enemy01.level = self
-        self.enemy_list.add(enemy01)
+#        enemy01 = Enemy01()
+#        enemy01.rect.x = 750
+#        enemy01.rect.y = 450
+#        enemy01.player = self.player
+#        enemy01.level = self
+#        self.enemy_list.add(enemy01)
+        
+        enemy02 = Enemy02()
+        enemy02.rect.x = 500
+        enemy02.rect.y = 450
+        enemy02.player = self.player
+        enemy02.level = self
+        self.enemy_list.add(enemy02)
         
 
 class Level_02(Level):
@@ -645,6 +668,13 @@ class Level_02(Level):
         
         from level_02_layout import levelLayout
         self.addObjects(levelLayout)
+        
+        enemy02 = Enemy02()
+        enemy02.rect.x = 750
+        enemy02.rect.y = 450
+        enemy02.player = self.player
+        enemy02.level = self
+        self.enemy_list.add(enemy02)
 
 
 class Level_03(Level):
