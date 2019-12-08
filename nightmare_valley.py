@@ -1,6 +1,7 @@
 import pygame
 import os  # vital to fix the mac issue pt1
 from moviepy.editor import VideoFileClip #Module needed to play video.
+import random
 
 # Screen dimensions
 SCREEN_WIDTH = 1024
@@ -30,7 +31,7 @@ FPS = 24
 levelLimit = -1000
 
 # Character
-gravity = 1.5
+gravity = 2.5
 gravityIsNegative = False
 jumpHeight = -27.5
 playerBehind = 9
@@ -46,17 +47,18 @@ standing = True
 isJump = False
 walkCount12 = 0
 walkCount2 = 0
+last_enemy = 0
+kill_count = 0
 
 fontMedium = pygame.font.Font("assets/IBMPlexSerif-Medium.ttf", 22)
 font = pygame.font.Font("assets/IBMPlexSerif-Bold.ttf", 24)
 fontPressStart = pygame.font.Font("assets/PressStart2P.ttf", 26)
 
-text = "You Died. Press 'r' to restart, "
-# text = font.render("You Died. Press 'r' to restart, ", True, (0, 128, 0))
+text = font.render("You Died. Press 'r' to restart, ", True, (0, 128, 0))
 text1_1 = font.render("or 'q' to quit.", True, (0, 128, 0))
 text2 = font.render("Welcome. Please click to start", True, (0, 128, 0))
 text3 = font.render("Paused. Press 'p' to unpause", True, (0, 128, 0))
-welcomeText1 = "Welcome to Nightmare Vally, the place where nightmares are manufactured."
+welcomeText1 = "Welcome to Nightmare Valley, the place where nightmares are manufactured."
 welcomeText2 = "We hope you have a horrible visit <3."
 welcomeText3 = "ps.  Press spacebar to jump."
 bootsText = "ps2.  Press 'a' to invert gravity."
@@ -915,9 +917,7 @@ def main():
                 if event.key == pygame.K_RIGHT and player.change_x > 0:
                    player.stop()
 
-    # Define what happens when player dies
-    def game_over():
-        player.image.blit(charDead, (0, 0))
+
     def pause(): # a simple pause function to allow the player to temporarily stop the game
 
         currentBg.fill((95, 95, 55))
@@ -928,7 +928,7 @@ def main():
 
     def unpause():
         
-        global bg
+        global currentBg
         
         paused = True
         
@@ -937,7 +937,7 @@ def main():
             for event in pygame.event.get():  
               if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_p:
-                    bg = getImage("bg.png")
+                    currentBg = getImage("bg.png")
                     redrawWindow()
                     player.stop()
                     paused = False  
@@ -967,10 +967,14 @@ def main():
                 (500 - text.get_width() // 2, 240 - text.get_height() // 2))
         currentBg.blit(text1_1,
                 (500 - text1_1.get_width() // 2, 340 - text.get_height() // 2))
+        
+        redrawWindow()
+        
+        
 
     def game_over2():
 
-        global bg
+        global currentBg
 
         over = True
 
@@ -979,7 +983,7 @@ def main():
             for event in pygame.event.get():
               if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_r:
-                    bg = getImage("bg.png")
+                    currentBg = getImage("bg.png")
                     redrawWindow()
                     main()
                     over = False
@@ -1007,20 +1011,59 @@ def main():
                         introOn = False
                         play = True
                         currentBg = bg
+                        
+                        
+    def spawn_arena_enemy():
+        
+        global last_enemy
+        global enemy02
+        global kill_count
+      
+        if kill_count < 10:
+        
+            enemy_spawn = random.randint(0,1)
+        
+        
+            if enemy_spawn == 1:
+                enemy02 = Enemy01()
+                enemy02.rect.x = 200
+                enemy02.rect.y = 150
+            else:
+                enemy02 = Enemy02()
+                enemy02.rect.x = 850
+                enemy02.rect.y = 550
+        
+        enemy02.player = player
+        enemy02.level = current_level
+        player.level.enemy_list.add(enemy02)
+        
+        else:
+            enemy03 = Enemy01()
+            enemy04 = Enemy01()
+            enemy05 = Enemy01()
+            
+            enemy03.rect.x = 850
+            enemy03.rect.y = 550
+            enemy02.player = player
+        enemy02.level = current_level
+        player.level.enemy_list.add(enemy02)
+        
+        
+        last_enemy = pygame.time.get_ticks()
 
     # -------- Main Program Loop -----------
     while not done:
         
         gameIntro()
+        global kill_count
 
         if player.rect.bottom == SCREEN_HEIGHT or player.rect.bottom <= 0:
             game_over()
-            redrawWindow()
             game_over2()
         for enemy in player.level.enemy_list:
             if pygame.sprite.spritecollide(player, player.level.enemy_list, False):
                 game_over()
-                pygame.quit()
+                game_over2()
         
         # Projectile collision condition
         for projectile in player.level.projectile_list:
@@ -1031,6 +1074,7 @@ def main():
                 for x in projectile_enemy_hit:
                     projectile.kill()
                     enemy.kill()
+                    kill_count += 1
             projectile_platform_hit = pygame.sprite.spritecollide(projectile, player.level.platform_list, False)
             for y in projectile_platform_hit:
                 projectile.kill()
@@ -1056,6 +1100,17 @@ def main():
                     # Out of levels. This just exits the program.
                     # You'll want to do something better.
                     done = True
+        
+        
+        current_time = pygame.time.get_ticks() 
+        if current_level_no == 1:
+           if current_time > last_enemy + 2000:
+               if len(player.level.enemy_list) < 3:
+                spawn_arena_enemy()
+               else:
+                    pass
+           else:
+               pass
         
         userEvents()
         clock.tick(FPS)
