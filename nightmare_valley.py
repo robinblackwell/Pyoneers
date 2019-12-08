@@ -26,7 +26,7 @@ def playVideo(videoToPlay):
         pass
 
 # Global variables
-FPS = 40
+FPS = 27
 levelLimit = -1000
 
 # Character

@@ -9,6 +9,8 @@ These instructions will get you a copy of the project up and running on your loc
 ### Prerequisites
 Before installing the dependencies, [python3](https://www.python.org/downloads/) and [pip](https://pip.pypa.io/en/stable/) is required to run the game. Note that pip should alreayd be installed if you have Python on your machine.
 
+Before running the setup comand, make sure you are on the game directory.
+
 ### Project setup
 Install all dependecies:
 ```
