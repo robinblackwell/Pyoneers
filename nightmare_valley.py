@@ -1,6 +1,7 @@
 import pygame
 import os  # vital to fix the mac issue pt1
 from moviepy.editor import VideoFileClip #Module needed to play video.
+import pyganim
 
 # Screen dimensions
 SCREEN_WIDTH = 1024
@@ -30,7 +31,7 @@ FPS = 24
 levelLimit = -1000
 
 # Character
-gravity = 1.5
+gravity = 3.6
 gravityIsNegative = False
 jumpHeight = -27.5
 playerBehind = 9
@@ -46,6 +47,7 @@ standing = True
 isJump = False
 walkCount12 = 0
 walkCount2 = 0
+walkCount3 = 0
 
 fontMedium = pygame.font.Font("assets/IBMPlexSerif-Medium.ttf", 22)
 font = pygame.font.Font("assets/IBMPlexSerif-Bold.ttf", 24)
@@ -82,6 +84,31 @@ charJump = getImage("playerJump.png")
 charDead = getImage("playerDead.png")
 jumpRight = getImage("jumpRight.png")
 jumpLeft = getImage("jumpLeft.png")
+
+# Enemy sprites
+enemy1 = [  
+            getImage("/enemies/enemy_1/enemy_1_1.png"), 
+            getImage("/enemies/enemy_1/enemy_1_2.png"),
+            # getImage("/enemies/enemy_1/enemy_1_3.png"),
+        ]
+
+enemy2 = [
+            getImage("/enemies/enemy_2/enemy_2_1.png"),
+            getImage("/enemies/enemy_1/enemy_1_1.png")
+        ]
+
+enemy3 = [
+            getImage("/enemies/enemy_3/enemy_3_1.png")
+        ]
+
+enemy4 = [
+            getImage("/enemies/enemy_4/enemy_4_1.png")
+        ]
+boss = [
+            getImage("/enemies/boss/boss.png")
+        ]
+
+enemySprite = [enemy1]
 
 # Background
 menuBg = getImage("menu_bg.png")
@@ -375,14 +402,17 @@ class Platform(pygame.sprite.Sprite):
 
 class Enemy(pygame.sprite.Sprite):
     
-    def __init__(self):
+    def __init__(self,enemySprite):
         """ Constructor function """
+    
+        self.enemySprite = enemySprite
 
         # Call the parent's constructor
         super().__init__()
 
-        # Set player to sprite image and keep alpha levels the same a png source
-        self.image = charStanding[0].convert_alpha()
+        self.image = enemySprite[0].convert_alpha()
+        # self.image = charStanding[0].convert_alpha()
+        
 
         # Set a referance to the image rect.
         self.rect = self.image.get_rect()
@@ -424,7 +454,7 @@ class Enemy01(Enemy):
     # Set speed vector of enemy
     change_x = 0
     change_y = 0
-    
+
     def update(self):
         """ Move the enemy. """
         # Gravity
@@ -515,9 +545,9 @@ class Enemy02(Enemy):
             self.change_y = 0
             
         block_hit_list = pygame.sprite.spritecollide(self, self.level.platform_list, False)
-        for block in block_hit_list:
-            if block.edge == True:
-                self.change_x *= -1
+        # for block in block_hit_list:
+        #     if block.edge == True:
+        #         self.change_x *= -1
 
 
 class Level():
@@ -572,7 +602,31 @@ class Level():
         self.world_shift_x = 0
         self.world_shift_y = 0
 
-    def update(self):
+    def animateEnemies(self):
+        global walkCount3
+        global enemySprite
+
+        if walkCount3 + 1 >= 7:
+            walkCount3 = 0
+
+        for i in self.enemy_list:
+            for sprite in enemySprite:
+                i.image = sprite[walkCount3//3].convert_alpha()
+                i.rect = i.image.get_rect()
+                print()
+                print("i.image{}".format(i.image))
+                # print("i.image{}".format(i.image))
+                print()
+                walkCount3 += 1
+                
+
+        # enemy02.image = setImage(charLeft[walkCount2//3])
+
+        # print(self.enemy_list)
+
+    
+
+    def update(self): 
         """ Update everything in this level."""
         for i in range(len(self.spriteList)):
             self.spriteList[i].update()
@@ -696,7 +750,7 @@ class Level_01(Level):
 #        enemy01.level = self
 #        self.enemy_list.add(enemy01)
         
-        enemy02 = Enemy02()
+        enemy02 = Enemy02(enemy2)
         enemy02.rect.x = 500
         enemy02.rect.y = 450
         enemy02.player = self.player
@@ -716,7 +770,7 @@ class Level_02(Level):
         from level_02_layout import levelLayout
         self.addObjects(levelLayout)
         
-        enemy02 = Enemy02()
+        enemy02 = Enemy02(enemy2)
         enemy02.rect.x = 750
         enemy02.rect.y = 450
         enemy02.player = self.player
@@ -738,7 +792,7 @@ class Level_03(Level):
 
 
 def main():
-
+    # boltAnim.play()
     # Game settings
     # Loop until the user clicks the close button.
     done = False
@@ -788,6 +842,7 @@ def main():
 
             # Update items in the level
             current_level.update()
+            current_level.animateEnemies()
             active_sprite_list.update()
 
         pygame.display.flip()
@@ -804,7 +859,7 @@ def main():
 
         def setImage(newImage):
             player.image = newImage.convert_alpha()
-
+        
         if movingLeft and not gravityIsNegative:
             setImage(charLeft[walkCount2//3])
             walkCount2 += 1
