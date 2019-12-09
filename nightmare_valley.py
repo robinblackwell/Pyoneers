@@ -463,7 +463,7 @@ class Enemy01(Enemy):
 class Enemy02(Enemy):
 
     # Set speed vector of enemy
-    change_x = -0.2
+    change_x = -2
     change_y = 0
     
     def update(self):
@@ -1165,15 +1165,15 @@ def main(current_level_no = 0):
                     
                     if enemy_type == 1:
                         enemy02 = Enemy03()
-                        enemy02.rect.x = 150  
+                        enemy02.rect.x = 250  
                         enemy02.rect.y = 150
                     else:  
                         enemy02 = Enemy01()
-                        enemy02.rect.x = 150
+                        enemy02.rect.x = 250
                         enemy02.rect.y = 150
                 else:
                     enemy02 = Enemy02()
-                    enemy02.rect.x = 850
+                    enemy02.rect.x = 800
                     enemy02.rect.y = 550
                 
                 enemy02.player = player
