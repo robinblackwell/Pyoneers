@@ -575,6 +575,61 @@ class EnemyAI_1(Enemy):
     change_y = 0
     boundary_left = 0
     boundary_right = 0
+    
+    def updateAI(self,predictedVelocityx,predictedVelocityy) : #(3) updateAI gives paddle a new position when called
+        self.change_x = predictedVelocityx
+        if predictedVelocityy-2 < 0: #One possibility for jumping is this 'if' clause
+            self.jump()
+        # Gravity
+        self.calc_grav()
+        
+        global walkCount3
+        global enemySprite
+
+        # for sprite in enemySprite:
+        if walkCount3 + 1 >= 7:
+            walkCount3 = 0
+        self.image = enemySprite[2][walkCount3//3].convert_alpha()
+        # i.rect = i.image.get_rect()
+        walkCount3 += 1
+ 
+        # Move left/right
+        self.rect.x += self.change_x
+ 
+        # See if we hit anything
+        block_hit_list = pygame.sprite.spritecollide(self, self.level.platform_list, False)
+        for block in block_hit_list:
+            # If we are moving right,
+            # set our right side to the left side of the item we hit
+            if self.change_x > 0:
+                self.rect.right = block.rect.left
+            elif self.change_x < 0:
+                # Otherwise if we are moving left, do the opposite.
+                self.rect.left = block.rect.right
+ 
+        # Move up/down
+        self.rect.y += self.change_y
+ 
+        # Check and see if we hit anything
+        block_hit_list = pygame.sprite.spritecollide(self, self.level.platform_list, False)
+        for block in block_hit_list:
+ 
+            # Reset our position based on the top/bottom of the object.
+            if self.change_y > 0:
+                self.rect.bottom = block.rect.top
+            elif self.change_y < 0:
+                self.rect.top = block.rect.bottom
+ 
+            # Stop our vertical movement
+            self.change_y = 0
+                
+                
+class EnemyAI_2(Enemy):
+    
+    change_x = -1
+    change_y = 0
+    boundary_left = 0
+    boundary_right = 0
 
     def updateAI(self,predictedVelocityx,predictedVelocityy) : #(3) updateAI gives paddle a new position when called
         self.change_x = predictedVelocityx
@@ -622,61 +677,6 @@ class EnemyAI_1(Enemy):
  
             # Stop our vertical movement
             self.change_y = 0
-                
-                
-class EnemyAI_2(Enemy):
-    
-    change_x = -1
-    change_y = 0
-    boundary_left = 0
-    boundary_right = 0
-
-    def updateAI(self,predictedVelocityx,predictedVelocityy) : #(3) updateAI gives paddle a new position when called
-        self.change_x = predictedVelocityx
-
-        self.change_y = predictedVelocityy-3 #Another possibility for jumping
-        # Gravity
-        self.calc_grav()
- 
-        global walkCount3
-        global enemySprite
-
-        # for sprite in enemySprite:
-        if walkCount3 + 1 >= 7:
-            walkCount3 = 0
-        self.image = enemySprite[3][walkCount3//3].convert_alpha()
-        # i.rect = i.image.get_rect()
-        walkCount3 += 1
-
-        # Move left/right
-        self.rect.x += self.change_x
- 
-        # See if we hit anything
-        block_hit_list = pygame.sprite.spritecollide(self, self.level.platform_list, False)
-        for block in block_hit_list:
-            # If we are moving right,
-            # set our right side to the left side of the item we hit
-            if self.change_x > 0:
-                self.rect.right = block.rect.left
-            elif self.change_x < 0:
-                # Otherwise if we are moving left, do the opposite.
-                self.rect.left = block.rect.right
- 
-        # Move up/down
-        self.rect.y += self.change_y
- 
-        # Check and see if we hit anything
-        block_hit_list = pygame.sprite.spritecollide(self, self.level.platform_list, False)
-        for block in block_hit_list:
- 
-            # Reset our position based on the top/bottom of the object.
-            if self.change_y > 0:
-                self.rect.bottom = block.rect.top
-            elif self.change_y < 0:
-                self.rect.top = block.rect.bottom
- 
-            # Stop our vertical movement
-            self.change_y = 0
 
 
 class Boss(Enemy): # boss - y-axis tracker
@@ -685,7 +685,6 @@ class Boss(Enemy): # boss - y-axis tracker
     change_x = 0
     change_y = 0
     
-
     def update(self):
         """ Move the enemy. """
         
@@ -780,6 +779,7 @@ class Level():
         self.enemy_list = spriteGroup()
         self.enemy_AI_list = spriteGroup()
         self.projectile_list = spriteGroup()
+        self.enemy_projectile_list = spriteGroup()
         self.ladder_list = spriteGroup()
         self.portal_list = spriteGroup()
         self.portal_list2 = spriteGroup()
@@ -797,6 +797,7 @@ class Level():
             self.enemy_list,
             self.enemy_AI_list,
             self.projectile_list,
+            self.enemy_projectile_list,
             self.ladder_list,
             self.portal_list,
             self.portal_list2,
@@ -984,6 +985,8 @@ def main(current_level_no = 0):
     kill_count = 0
     boss_spawn = False
     last_minion = 0
+    end_lvl_2 = False
+    boss_dead = False
     
     
     done = False
@@ -1285,6 +1288,7 @@ def main(current_level_no = 0):
                 minion1.player = player
                 minion1.level = current_level
                 player.level.enemy_AI_list.add(minion1)
+                player.level.enemy_list.add(minion1)
             
                 minion2 = EnemyAI_2(enemy3)
                 minion2.rect.x = 800
@@ -1292,6 +1296,7 @@ def main(current_level_no = 0):
                 minion2.player = player
                 minion2.level = current_level
                 player.level.enemy_AI_list.add(minion2)
+                player.level.enemy_list.add(minion2)
                 
                 # minion3 = EnemyAI_2(enemy3)
                 # minion3.rect.x = 800
@@ -1318,14 +1323,24 @@ def main(current_level_no = 0):
                         enemy02 = EnemyAI_1(enemy3)
                         enemy02.rect.x = 250  
                         enemy02.rect.y = 150
+                        enemy02.player = player
+                        enemy02.level = current_level
+                        player.level.enemy_AI_list.add(enemy02)
+                        player.level.enemy_list.add(enemy02)
                     else:  
                         enemy02 = Enemy01(enemy1)
                         enemy02.rect.x = 250
                         enemy02.rect.y = 150
+                        enemy02.player = player
+                        enemy02.level = current_level
+                        player.level.enemy_list.add(enemy02)
                 else:
                     enemy02 = Enemy02(enemy2)
                     enemy02.rect.x = 800
                     enemy02.rect.y = 550
+                    enemy02.player = player
+                    enemy02.level = current_level
+                    player.level.enemy_list.add(enemy02)
                 
                 enemy02.player = player
                 enemy02.level = current_level
@@ -1372,6 +1387,9 @@ def main(current_level_no = 0):
             if pygame.sprite.spritecollide(player, player.level.enemy_list, False):
                 game_over()
                 game_over2()
+            if pygame.sprite.spritecollide(player,player.level.enemy_projectile_list, False):
+                game_over()
+                game_over2()
         
         # Projectile collision condition
         for projectile in player.level.projectile_list:
@@ -1395,7 +1413,37 @@ def main(current_level_no = 0):
                             boss_health -= 1
                             print(boss_health)
                         else:
-                            boss_death()
+                            for boss in player.level.boss_list:
+                                boss.kill()
+                                boss_dead = True
+        
+        if end_lvl_2 == False:
+            if boss_dead == True:
+                player.level.boot_list.add(Platform(boot1,850,500))
+                end_lvl_2 = True
+                            
+        for projectile in player.level.enemy_projectile_list:
+            for enemy in player.level.boss_list:
+                if projectile.rect.x > enemy.rect.x + 450 or projectile.rect.x < enemy.rect.x - 450:
+                    projectile.kill()
+            projectile_platform_hit = pygame.sprite.spritecollide(projectile, player.level.platform_list, False)
+            for y in projectile_platform_hit:
+                projectile.kill()
+                            
+        for enemy in player.level.boss_list:
+            if not boss_dead:
+                if len(player.level.enemy_projectile_list) < 1:
+                    projectile = Projectile(-1)
+                    projectile.rect.x = enemy.rect.x + 12.5
+                    projectile.rect.y = enemy.rect.y + 20
+                    player.level.enemy_projectile_list.add(projectile)
+                    boss_last_fired = pygame.time.get_ticks()
+                elif pygame.time.get_ticks() - boss_last_fired > 2000:
+                    projectile = Projectile(-1)
+                    projectile.rect.x = enemy.rect.x + 12.5
+                    projectile.rect.y = enemy.rect.y + 20
+                    player.level.enemy_projectile_list.add(projectile)
+                    boss_last_fired = pygame.time.get_ticks()
                         
                 
         for portal in player.level.portal_list:
@@ -1452,7 +1500,7 @@ def main(current_level_no = 0):
     
     # vital for the mac issue pt3
     pygame.quit()
-    os._exit(0) 
+    os._exit(0)
 
 
 
