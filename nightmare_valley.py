@@ -38,7 +38,7 @@ def playVideo(videoToPlay):
         pass
 
 # Global variables
-FPS = 24
+FPS = 27
 
 # Character
 gravity = 2.5
@@ -57,12 +57,18 @@ standing = True
 isJump = False
 walkCount12 = 0
 walkCount2 = 0
+walkCount3 = 0
+
 last_enemy = 0
 kill_count = 0
 current_time = 0
 boss_spawn = False
 last_minion = 0
+<<<<<<< HEAD
 boss_health = 1
+=======
+boss_health = 20
+>>>>>>> master
 
 fontMedium = pygame.font.Font("assets/IBMPlexSerif-Medium.ttf", 22)
 font = pygame.font.Font("assets/IBMPlexSerif-Bold.ttf", 24)
@@ -73,15 +79,21 @@ text1_1 = font.render("or 'q' to quit.", True, (0, 128, 0))
 text2 = font.render("Welcome. Please click to start", True, (0, 128, 0))
 text3 = font.render("Paused. Press 'p' to unpause", True, (0, 128, 0))
 text4 = font.render("You have escaped Nightmare Valley - Congratulations!", True, (0, 128, 0))
+<<<<<<< HEAD
 welcomeText1 = "Welcome to Nightmare Valley, the place where nightmares are manufactured."
+=======
+
+welcomeText1 = "Welcome to Nightmare Valley, where nightmares are manufactured."
+>>>>>>> master
 welcomeText2 = "We hope you have a horrible visit <3."
-welcomeText3 = "ps.  Press spacebar to jump."
+welcomeText3 = "ps.  Press spacebar to jump. (And climb up vines)"
+welcomeText4 = "ps.  Press 'ctr to shoot'."
 bootsText = "ps2.  Press 'a' to invert gravity."
 noText = ""
 currentText = text
 
 strList = [
-    welcomeText1, welcomeText2, welcomeText3, bootsText
+    welcomeText1, welcomeText2, welcomeText3, bootsText, welcomeText4
     ]
 
 introOn = True
@@ -100,6 +112,36 @@ charDead = getImage("playerDead.png")
 jumpRight = getImage("jumpRight.png")
 jumpLeft = getImage("jumpLeft.png")
 
+# Enemy sprites
+enemy1 = [
+    getImage("/enemies/enemy_1/enemy_1_1.png"),
+    getImage("/enemies/enemy_1/enemy_1_2.png"),
+    getImage("/enemies/enemy_1/enemy_1_3.png"),
+    # getImage("/enemies/enemy_1/enemy_1_3.png"),
+]
+
+enemy2 = [
+    getImage("/enemies/enemy_2/enemy_2_1.png"),
+    getImage("/enemies/enemy_2/enemy_2_1.png"),
+]
+
+enemy3 = [
+    getImage("/enemies/enemy_3/enemy_3_1.png"),
+    getImage("/enemies/enemy_3/enemy_3_1.png")
+]
+
+enemy4 = [
+    getImage("/enemies/enemy_4/enemy_4_1.png"),
+    getImage("/enemies/enemy_4/enemy_4_1.png")
+]
+bossSprite = [
+    getImage("/enemies/boss/boss.png"),
+    getImage("/enemies/boss/boss.png")
+]
+
+enemySprite = [enemy1, enemy2, enemy4, enemy3, bossSprite]
+
+
 # Background
 menuBg = getImage("menu_bg.png")
 currentBg = menuBg
@@ -116,6 +158,7 @@ house = getImage("house.png")
 vine = getImage("vine.png")
 noticeBoard = getImage("noticeBoard.png")
 portal = getImage("portal.png")
+portalRed = getImage("portalRed.png")
 bgY = 0
 bgX = 0
 
@@ -377,14 +420,16 @@ class Platform(pygame.sprite.Sprite):
 
 class Enemy(pygame.sprite.Sprite):
     
-    def __init__(self):
+    def __init__(self, enemySprite):
         """ Constructor function """
 
+        self.enemySprite = enemySprite
+        
         # Call the parent's constructor
         super().__init__()
 
         # Set player to sprite image and keep alpha levels the same a png source
-        self.image = charStanding[0].convert_alpha()
+        self.image = enemySprite[0].convert_alpha()
 
         # Set a referance to the image rect.
         self.rect = self.image.get_rect()
@@ -426,7 +471,17 @@ class Enemy01(Enemy):
         """ Move the enemy. """
         # Gravity
         self.calc_grav()
- 
+
+        global walkCount3
+        global enemySprite
+
+        # for sprite in enemySprite:
+        if walkCount3 + 1 >= 7:
+            walkCount3 = 0
+        self.image = enemySprite[0][walkCount3//3].convert_alpha()
+        # i.rect = i.image.get_rect()
+        walkCount3 += 1
+
         # Move left/right
         if self.player.rect.x < self.rect.x:
             self.change_x = -playerVel/2
@@ -482,6 +537,16 @@ class Enemy02(Enemy):
         # Gravity
         self.calc_grav()
         
+        global walkCount3
+        global enemySprite
+
+        # for sprite in enemySprite:
+        if walkCount3 + 1 >= 7:
+            walkCount3 = 0
+        self.image = enemySprite[1][walkCount3//3].convert_alpha()
+        # i.rect = i.image.get_rect()
+        walkCount3 += 1
+
         self.rect.x += self.change_x
         
         # See if we hit anything
@@ -513,6 +578,7 @@ class Enemy02(Enemy):
                 
 
 class EnemyAI_1(Enemy):
+<<<<<<< HEAD
     
     change_x = -1
     change_y = 0
@@ -558,12 +624,72 @@ class EnemyAI_1(Enemy):
                 
                 
 class EnemyAI_2(Enemy):
+=======
+>>>>>>> master
     
     change_x = -1
     change_y = 0
     boundary_left = 0
     boundary_right = 0
+
+    def updateAI(self,predictedVelocityx,predictedVelocityy) : #(3) updateAI gives paddle a new position when called
+        self.change_x = predictedVelocityx
+        if predictedVelocityy-2 < 0: #One possibility for jumping is this 'if' clause
+            self.jump()
+        # Gravity
+        self.calc_grav()
+ 
+        global walkCount3
+        global enemySprite
+
+        # for sprite in enemySprite:
+        if walkCount3 + 1 >= 7:
+            walkCount3 = 0
+        self.image = enemySprite[2][walkCount3//3].convert_alpha()
+        # i.rect = i.image.get_rect()
+        walkCount3 += 1
+        
+        # Move left/right
+        self.rect.x += self.change_x
+ 
+        # See if we hit anything
+        block_hit_list = pygame.sprite.spritecollide(self, self.level.platform_list, False)
+        for block in block_hit_list:
+            # If we are moving right,
+            # set our right side to the left side of the item we hit
+            if self.change_x > 0:
+                self.rect.right = block.rect.left
+            elif self.change_x < 0:
+                # Otherwise if we are moving left, do the opposite.
+                self.rect.left = block.rect.right
+ 
+        # Move up/down
+        self.rect.y += self.change_y
+ 
+        # Check and see if we hit anything
+        block_hit_list = pygame.sprite.spritecollide(self, self.level.platform_list, False)
+        for block in block_hit_list:
+ 
+            # Reset our position based on the top/bottom of the object.
+            if self.change_y > 0:
+                self.rect.bottom = block.rect.top
+            elif self.change_y < 0:
+                self.rect.top = block.rect.bottom
+ 
+            # Stop our vertical movement
+            self.change_y = 0
+                
+                
+class EnemyAI_2(Enemy):
     
+<<<<<<< HEAD
+=======
+    change_x = -1
+    change_y = 0
+    boundary_left = 0
+    boundary_right = 0
+
+>>>>>>> master
     def updateAI(self,predictedVelocityx,predictedVelocityy) : #(3) updateAI gives paddle a new position when called
         self.change_x = predictedVelocityx
 
@@ -571,6 +697,19 @@ class EnemyAI_2(Enemy):
         # Gravity
         self.calc_grav()
  
+<<<<<<< HEAD
+=======
+        global walkCount3
+        global enemySprite
+
+        # for sprite in enemySprite:
+        if walkCount3 + 1 >= 7:
+            walkCount3 = 0
+        self.image = enemySprite[3][walkCount3//3].convert_alpha()
+        # i.rect = i.image.get_rect()
+        walkCount3 += 1
+
+>>>>>>> master
         # Move left/right
         self.rect.x += self.change_x
  
@@ -608,6 +747,10 @@ class Boss(Enemy): # boss - y-axis tracker
     change_x = 0
     change_y = 0
     
+<<<<<<< HEAD
+=======
+
+>>>>>>> master
     def update(self):
         """ Move the enemy. """
         
@@ -617,6 +760,19 @@ class Boss(Enemy): # boss - y-axis tracker
         
         # Gravity
         self.calc_grav()
+<<<<<<< HEAD
+=======
+
+        global walkCount3
+        global enemySprite
+
+        # for sprite in enemySprite:
+        if walkCount3 + 1 >= 7:
+            walkCount3 = 0
+        self.image = enemySprite[4][walkCount3//3].convert_alpha()
+        # i.rect = i.image.get_rect()
+        walkCount3 += 1
+>>>>>>> master
  
         # Move left/right
         if self.player.rect.y < self.rect.y:
@@ -695,11 +851,16 @@ class Level():
         self.enemy_projectile_list = spriteGroup()
         self.ladder_list = spriteGroup()
         self.portal_list = spriteGroup()
+<<<<<<< HEAD
+=======
+        self.portal_list2 = spriteGroup()
+>>>>>>> master
         self.boss_list = spriteGroup()
         self.item_message_list1 = spriteGroup()
         self.item_message_list2 = spriteGroup()
         self.item_message_list3 = spriteGroup()
         self.item_message_list4 = spriteGroup()
+        self.item_message_list5 = spriteGroup()
 
         self.spriteList = [
             self.platform_list,
@@ -711,11 +872,16 @@ class Level():
             self.enemy_projectile_list,
             self.ladder_list,
             self.portal_list,
+<<<<<<< HEAD
+=======
+            self.portal_list2,
+>>>>>>> master
             self.boss_list,
             self.item_message_list1,
             self.item_message_list2,
             self.item_message_list3,
             self.item_message_list4,
+            self.item_message_list5,
         ]
 
         self.message_list = [
@@ -723,6 +889,7 @@ class Level():
             self.item_message_list2,
             self.item_message_list3,
             self.item_message_list4,
+            self.item_message_list5,
         ]
 
         self.player = player
@@ -754,7 +921,7 @@ class Level():
         text_objects()
         
         TextSurf, TextRect = text_objects()
-        TextRect.center = ((SCREEN_WIDTH/2), (SCREEN_HEIGHT/2))
+        TextRect.center = ((SCREEN_WIDTH/2), (SCREEN_HEIGHT/2.7))
         screen.blit(TextSurf, TextRect)
 
     def shift_world(self, shift_x, shift_y):
@@ -803,10 +970,14 @@ class Level():
                     self.item_message_list4.add(Platform(groundTileTop, x, y))
                 elif tile == 3:
                     self.item_message_list3.add(Platform(noticeBoard, x, y))
+                elif tile == 3.1:
+                    self.item_message_list5.add(Platform(noticeBoard, x, y))
+                # elif tile == 4:
+                #     self.portal_list2.add(Platform(portal,x,y))
                 elif tile == 4:
                     self.portal_list.add(Platform(portal,x,y))
                 elif tile == 4.1:
-                    self.item_list.add(Platform(pygame.transform.rotate(portal, 90),x,y))
+                    self.portal_list.add(Platform(pygame.transform.rotate(portalRed, 90),x,y))
                 elif tile == 5:
                     self.ladder_list.add(Platform(vine,x,y))
                 elif tile == 6:
@@ -819,6 +990,7 @@ class Level():
                     self.platform_list.add(Platform(groundTile_platform,x,y,x,x+(3*64),0,0,2,0))
                 elif tile == 8.2:
                     self.platform_list.add(Platform(groundTile_platform,x,random.randint(y-127,y+127),0,0,y-128,y+128,0,2*random.choice((1,-1))))
+<<<<<<< HEAD
 #                elif tile == 9.1:
 #                    enemy02 = Enemy02()
 #                    enemy02.rect.x = x
@@ -828,6 +1000,8 @@ class Level():
 #                    enemy02.player = self.player
 #                    enemy02.level = self
 #                    self.enemy_list.add(enemy02)
+=======
+>>>>>>> master
                 x += 64
             y += 64
 
@@ -844,14 +1018,6 @@ class Level_01(Level):
         
         from level_01_layout import levelLayout
         self.addObjects(levelLayout)
-        
-#        enemy01 = Enemy01()
-#        enemy01.rect.x = 750
-#        enemy01.rect.y = 450
-#        enemy01.player = self.player
-#        enemy01.level = self
-#        self.enemy_list.add(enemy01)
-        
 
 class Level_02(Level):
     """ Definition for level 1. """
@@ -865,7 +1031,11 @@ class Level_02(Level):
         from level_02_layout import levelLayout
         self.addObjects(levelLayout)
         
+<<<<<<< HEAD
         enemyAI_1 = EnemyAI_1()
+=======
+        enemyAI_1 = EnemyAI_1(enemy2)
+>>>>>>> master
         enemyAI_1.rect.x = 750
         enemyAI_1.rect.y = 450
         enemyAI_1.player = self.player
@@ -873,7 +1043,11 @@ class Level_02(Level):
         self.enemy_AI_list.add(enemyAI_1)
         self.enemy_list.add(enemyAI_1)
         
+<<<<<<< HEAD
         enemyAI_2 = EnemyAI_2()
+=======
+        enemyAI_2 = EnemyAI_2(enemy2)
+>>>>>>> master
         enemyAI_2.rect.x = 200
         enemyAI_2.rect.y = 450
         enemyAI_2.player = self.player
@@ -906,8 +1080,11 @@ def main(current_level_no = 0):
     kill_count = 0
     boss_spawn = False
     last_minion = 0
+<<<<<<< HEAD
     end_lvl_2 = False
     boss_dead = False
+=======
+>>>>>>> master
     
     
     done = False
@@ -1085,12 +1262,6 @@ def main(current_level_no = 0):
                         projectile.rect.y = player.rect.y + 20
                         player.level.projectile_list.add(projectile)
                         last_fired = pygame.time.get_ticks()
-                else:
-                    movingLeft = False
-                    movingRight = False
-                    standing = True
-                    walkCount12 = 0
-                    walkCount2 = 0
 
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_LEFT and player.change_x < 0:
@@ -1198,14 +1369,20 @@ def main(current_level_no = 0):
         global last_enemy
         global kill_count
         global boss_spawn
+<<<<<<< HEAD
         
         
+=======
+        
+        
+>>>>>>> master
         if boss_spawn == True:
             
             global current_time
             
             global last_minion
             
+<<<<<<< HEAD
             
             if current_time > last_minion + 10000:
 
@@ -1232,11 +1409,38 @@ def main(current_level_no = 0):
                 player.level.enemy_list.add(minion3) 
                    
                 
+=======
+            if current_time > last_minion + 10000 and len(player.level.enemy_AI_list) < 1:
+
+                
+                minion1 = EnemyAI_2(enemy3)
+                minion1.rect.x = 800
+                minion1.rect.y = random.randint(150, 300)
+                minion1.player = player
+                minion1.level = current_level
+                player.level.enemy_AI_list.add(minion1)
+            
+                minion2 = EnemyAI_2(enemy3)
+                minion2.rect.x = 800
+                minion2.rect.y = random.randint(150, 300)
+                minion2.player = player
+                minion2.level = current_level
+                player.level.enemy_AI_list.add(minion2)
+                
+                # minion3 = EnemyAI_2(enemy3)
+                # minion3.rect.x = 800
+                # minion3.rect.y = random.randint(150, 300)
+                # minion3.player = player
+                # minion3.level = current_level
+                # player.level.enemy_AI_list.add(minion3)
+
+>>>>>>> master
                 last_minion = pygame.time.get_ticks()
             else:
                 pass
         
         else:
+<<<<<<< HEAD
         
       
             if kill_count < 2:
@@ -1244,8 +1448,53 @@ def main(current_level_no = 0):
                 last_enemy = pygame.time.get_ticks()
             
                 enemy_spawnpoint = random.randint(0,2)
+=======
+            if kill_count < 5:
+        
+                last_enemy = pygame.time.get_ticks()
+            
+                enemy_spawnpoint = random.randint(0,2)
         
         
+                if enemy_spawnpoint < 2:
+                    enemy_type = random.randint(0,1)
+                    if enemy_type == 1:
+                        enemy02 = EnemyAI_1(enemy3)
+                        enemy02.rect.x = 250  
+                        enemy02.rect.y = 150
+                    else:  
+                        enemy02 = Enemy01(enemy1)
+                        enemy02.rect.x = 250
+                        enemy02.rect.y = 150
+                else:
+                    enemy02 = Enemy02(enemy2)
+                    enemy02.rect.x = 800
+                    enemy02.rect.y = 550
+                
+                enemy02.player = player
+                enemy02.level = current_level
+                player.level.enemy_list.add(enemy02)
+        
+            else:
+    
+                boss = Boss(bossSprite)
+                boss.rect.x = 800
+                boss.rect.y = 250
+                boss.player = player
+                boss.level = current_level
+                player.level.boss_list.add(boss)
+                boss_spawn = True
+            
+                
+    def boss_death():
+    
+        pass
+       
+>>>>>>> master
+        
+    def game_complete(): # a screen only for those who are worthy
+        
+<<<<<<< HEAD
                 if enemy_spawnpoint < 2:
                 
                     enemy_type = random.randint(0,1)
@@ -1280,6 +1529,8 @@ def main(current_level_no = 0):
         
     def game_complete(): # a screen only for those who are worthy
         
+=======
+>>>>>>> master
         currentBg.fill((100, 100, 100))
         currentBg.blit(text4,
                 (500 - text4.get_width() // 2, 240 - text4.get_height() // 2))
@@ -1329,6 +1580,7 @@ def main(current_level_no = 0):
                             boss_health -= 1
                             print(boss_health)
                         else:
+<<<<<<< HEAD
                             for boss in player.level.boss_list:
                                 boss.kill()
                                 boss_dead = True
@@ -1360,6 +1612,9 @@ def main(current_level_no = 0):
                     projectile.rect.y = enemy.rect.y + 20
                     player.level.enemy_projectile_list.add(projectile)
                     boss_last_fired = pygame.time.get_ticks()
+=======
+                            boss_death()
+>>>>>>> master
                         
                 
         for portal in player.level.portal_list:
@@ -1397,8 +1652,11 @@ def main(current_level_no = 0):
         
         if current_level_no == 1:
              #AI for enemy
+<<<<<<< HEAD
              #toPredict = df.append({'player.rect.x-enemy02.rect.x': (player.rect.x-player.level.enemy02.rect.x), 'player.rect.y-enemy02.rect.y': (player.rect.y-player.level.enemy02.rect.y)}, ignore_index= True)
              #print(clf.predict(toPredict))
+=======
+>>>>>>> master
              for enemy in player.level.enemy_AI_list:
                  toPredict = df.append({'player.rect.x-enemy02.rect.x': (player.rect.x-enemy.rect.x),
                                         'player.rect.y-enemy02.rect.y': (player.rect.y-enemy.rect.y)}, ignore_index=True)
@@ -1413,8 +1671,6 @@ def main(current_level_no = 0):
         
         playVideo(clip)
         playSound(bgMusic)
-        # showMessage(current_level.message_list, welcomeText)
-        # showMessage(current_level.item_message_list2, bootsText)
         redrawWindow()
     
     
@@ -1422,32 +1678,11 @@ def main(current_level_no = 0):
     pygame.quit()
     os._exit(0)
 
-    
-#    # Loop until the user clicks the close button.
-#    done = False
-#
-#    # Create the player
-#    player = Player()
-#
-#    # Create all the levels
-#    level_list = Level_01(player)
-#
-#    # Set the current level
-#    current_level = level_list
-#
-#    active_sprite_list = pygame.sprite.Group()
-#    player.level = current_level
-#
-#    player.rect.x = 340
-#    player.rect.y = 450
-#    active_sprite_list.add(player)
-#
-#    pygame.quit()
-#    os._exit(0)
 
 
 if __name__ == "__main__":
     main()
+<<<<<<< HEAD
 
 
 # TODO
@@ -1464,3 +1699,5 @@ if __name__ == "__main__":
 
 # https: // www.youtube.com/watch?v = UdsNBIzsmlI
 # https: // www.youtube.com/watch?v = HCWI2f7tQnY
+=======
+>>>>>>> master
