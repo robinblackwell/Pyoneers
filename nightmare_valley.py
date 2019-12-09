@@ -2,7 +2,18 @@ import pygame
 import os  # vital to fix the mac issue pt1
 from moviepy.editor import VideoFileClip #Module needed to play video.
 import random
+import pandas as pd  # (1) The ML step
+from sklearn.tree import DecisionTreeRegressor
 
+pong = pd.read_csv("gamedata-RB.csv")
+
+X = pong.drop(columns=['enemy02.change_x', 'enemy02.change_y'])
+y_1 = pong['enemy02.change_x']
+y_2 = pong['enemy02.change_y']
+clf = DecisionTreeRegressor(max_depth=3)
+
+df = pd.DataFrame(columns=['player.rect.x-enemy02.rect.x',
+                           'player.rect.y-enemy02.rect.y'])  # Features
 # Screen dimensions
 SCREEN_WIDTH = 1024
 SCREEN_HEIGHT = 640
@@ -501,33 +512,94 @@ class Enemy02(Enemy):
             self.change_y = 0
                 
 
-class Enemy03(Enemy):
+class EnemyAI_1(Enemy):
     
     change_x = -1
     change_y = 0
     boundary_left = 0
     boundary_right = 0
     
-    def update(self):
-#        self.calc_grav()
+    def updateAI(self,predictedVelocityx,predictedVelocityy) : #(3) updateAI gives paddle a new position when called
+        self.change_x = predictedVelocityx
+        if predictedVelocityy-2 < 0: #One possibility for jumping is this 'if' clause
+            self.jump()
+        # Gravity
+        self.calc_grav()
+ 
+        # Move left/right
         self.rect.x += self.change_x
-        
-        if (self.rect.left < self.boundary_left) or (self.rect.right > self.boundary_right):
-            self.change_x *= -1
-        
+ 
+        # See if we hit anything
+        block_hit_list = pygame.sprite.spritecollide(self, self.level.platform_list, False)
+        for block in block_hit_list:
+            # If we are moving right,
+            # set our right side to the left side of the item we hit
+            if self.change_x > 0:
+                self.rect.right = block.rect.left
+            elif self.change_x < 0:
+                # Otherwise if we are moving left, do the opposite.
+                self.rect.left = block.rect.right
+ 
+        # Move up/down
         self.rect.y += self.change_y
-#        # Check and see if we hit anything
-#        block_hit_list = pygame.sprite.spritecollide(self, self.level.platform_list, False)
-#        for block in block_hit_list:
-# 
-#            # Reset our position based on the top/bottom of the object.
-#            if self.change_y > 0:
-#                self.rect.bottom = block.rect.top
-#            elif self.change_y < 0:
-#                self.rect.top = block.rect.bottom
-# 
-#            # Stop our vertical movement
-#            self.change_y = 0
+ 
+        # Check and see if we hit anything
+        block_hit_list = pygame.sprite.spritecollide(self, self.level.platform_list, False)
+        for block in block_hit_list:
+ 
+            # Reset our position based on the top/bottom of the object.
+            if self.change_y > 0:
+                self.rect.bottom = block.rect.top
+            elif self.change_y < 0:
+                self.rect.top = block.rect.bottom
+ 
+            # Stop our vertical movement
+            self.change_y = 0
+                
+                
+class EnemyAI_2(Enemy):
+    
+    change_x = -1
+    change_y = 0
+    boundary_left = 0
+    boundary_right = 0
+    
+    def updateAI(self,predictedVelocityx,predictedVelocityy) : #(3) updateAI gives paddle a new position when called
+        self.change_x = predictedVelocityx
+
+        self.change_y = predictedVelocityy-3 #Another possibility for jumping
+        # Gravity
+        self.calc_grav()
+ 
+        # Move left/right
+        self.rect.x += self.change_x
+ 
+        # See if we hit anything
+        block_hit_list = pygame.sprite.spritecollide(self, self.level.platform_list, False)
+        for block in block_hit_list:
+            # If we are moving right,
+            # set our right side to the left side of the item we hit
+            if self.change_x > 0:
+                self.rect.right = block.rect.left
+            elif self.change_x < 0:
+                # Otherwise if we are moving left, do the opposite.
+                self.rect.left = block.rect.right
+ 
+        # Move up/down
+        self.rect.y += self.change_y
+ 
+        # Check and see if we hit anything
+        block_hit_list = pygame.sprite.spritecollide(self, self.level.platform_list, False)
+        for block in block_hit_list:
+ 
+            # Reset our position based on the top/bottom of the object.
+            if self.change_y > 0:
+                self.rect.bottom = block.rect.top
+            elif self.change_y < 0:
+                self.rect.top = block.rect.bottom
+ 
+            # Stop our vertical movement
+            self.change_y = 0
 
 
 class Boss(Enemy): # boss - y-axis tracker
@@ -618,6 +690,7 @@ class Level():
         self.item_list = spriteGroup()
         self.boot_list = spriteGroup()
         self.enemy_list = spriteGroup()
+        self.enemy_AI_list = spriteGroup()
         self.projectile_list = spriteGroup()
         self.ladder_list = spriteGroup()
         self.portal_list = spriteGroup()
@@ -632,6 +705,7 @@ class Level():
             self.item_list,
             self.boot_list,
             self.enemy_list,
+            self.enemy_AI_list,
             self.projectile_list,
             self.ladder_list,
             self.portal_list,
@@ -744,14 +818,14 @@ class Level():
                 elif tile == 8.2:
                     self.platform_list.add(Platform(groundTile_platform,x,random.randint(y-127,y+127),0,0,y-128,y+128,0,2*random.choice((1,-1))))
 #                elif tile == 9.1:
-#                    enemy02 = Enemy03()
+#                    enemy02 = Enemy02()
 #                    enemy02.rect.x = x
 #                    enemy02.rect.y = y
 #                    enemy02.boundary_left = x - (3*64)
 #                    enemy02.boundary_right = x + (4*64)
 #                    enemy02.player = self.player
 #                    enemy02.level = self
-#                    self.enemy_list.add(enemy03)
+#                    self.enemy_list.add(enemy02)
                 x += 64
             y += 64
 
@@ -789,12 +863,21 @@ class Level_02(Level):
         from level_02_layout import levelLayout
         self.addObjects(levelLayout)
         
-        enemy02 = Enemy02()
-        enemy02.rect.x = 750
-        enemy02.rect.y = 450
-        enemy02.player = self.player
-        enemy02.level = self
-        self.enemy_list.add(enemy02)
+        enemyAI_1 = EnemyAI_1()
+        enemyAI_1.rect.x = 750
+        enemyAI_1.rect.y = 450
+        enemyAI_1.player = self.player
+        enemyAI_1.level = self
+        self.enemy_AI_list.add(enemyAI_1)
+        self.enemy_list.add(enemyAI_1)
+        
+        enemyAI_2 = EnemyAI_2()
+        enemyAI_2.rect.x = 200
+        enemyAI_2.rect.y = 450
+        enemyAI_2.player = self.player
+        enemyAI_2.level = self
+        self.enemy_AI_list.add(enemyAI_2)
+        self.enemy_list.add(enemyAI_2)
 
 
 class Level_03(Level):
@@ -1123,21 +1206,21 @@ def main(current_level_no = 0):
             if current_time > last_minion + 10000:
 
                 
-                minion1 = Enemy01()
+                minion1 = EnemyAI_2()
                 minion1.rect.x = 700
                 minion1.rect.y = 150
                 minion1.player = player
                 minion1.level = current_level
                 player.level.enemy_list.add(minion1)
             
-                minion2 = Enemy01()
+                minion2 = EnemyAI_2()
                 minion2.rect.x = 600
                 minion2.rect.y = 150
                 minion2.player = player
                 minion2.level = current_level
                 player.level.enemy_list.add(minion2)
                 
-                minion3 = Enemy01()
+                minion3 = EnemyAI_2()
                 minion3.rect.x = 500
                 minion3.rect.y = 150
                 minion3.player = player
@@ -1164,7 +1247,7 @@ def main(current_level_no = 0):
                     enemy_type = random.randint(0,1)
                     
                     if enemy_type == 1:
-                        enemy02 = Enemy03()
+                        enemy02 = EnemyAI_1()
                         enemy02.rect.x = 250  
                         enemy02.rect.y = 150
                     else:  
@@ -1254,6 +1337,7 @@ def main(current_level_no = 0):
         for portal in player.level.portal_list:
             portal_hit = pygame.sprite.spritecollide(player, player.level.portal_list, False)
             if portal_hit:
+                player.hasBoot = False
                 if current_level_no == 0:
                     player.rect.x = 550
                     player.rect.y = 100
@@ -1283,6 +1367,15 @@ def main(current_level_no = 0):
            else:
                pass
         
+        if current_level_no == 1:
+             #AI for enemy
+             #toPredict = df.append({'player.rect.x-enemy02.rect.x': (player.rect.x-player.level.enemy02.rect.x), 'player.rect.y-enemy02.rect.y': (player.rect.y-player.level.enemy02.rect.y)}, ignore_index= True)
+             #print(clf.predict(toPredict))
+             for enemy in player.level.enemy_AI_list:
+                 toPredict = df.append({'player.rect.x-enemy02.rect.x': (player.rect.x-enemy.rect.x),
+                                        'player.rect.y-enemy02.rect.y': (player.rect.y-enemy.rect.y)}, ignore_index=True)
+                 enemy.updateAI(clf.fit(X,y_1).predict(toPredict),clf.fit(X,y_2).predict(toPredict))
+
         userEvents()
         clock.tick(FPS)
         if current_level_no != 1:
