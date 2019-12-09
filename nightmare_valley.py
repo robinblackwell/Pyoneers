@@ -737,7 +737,7 @@ class Level():
         for i in self.enemy_list:
             for sprite in enemySprite:
                 i.image = sprite[walkCount3//3].convert_alpha()
-                i.rect = i.image.get_rect()
+                # i.rect = i.image.get_rect()
                 print()
                 print("i.image{}".format(i.image))
                 # print("i.image{}".format(i.image))
