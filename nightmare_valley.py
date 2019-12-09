@@ -1193,49 +1193,6 @@ def main(current_level_no = 0):
         
         global last_enemy
         global kill_count
-<<<<<<< HEAD
-      
-#        if kill_count < 10:
-#        
-#            enemy_spawn = random.randint(0,1)
-#        
-#        
-#            # if enemy_spawn == 1:
-#            #     enemy06 = Enemy01()
-#            #     enemy06.rect.x = 200
-#            #     enemy06.rect.y = 150
-#            # else:
-#            #     enemy06 = Enemy02()
-#            #     enemy06.rect.x = 850
-#            #     enemy06.rect.y = 550
-#        
-#            # enemy06.player = player
-#            # enemy06.level = current_level
-#            # player.level.enemy_list.add(enemy06)
-#        
-#        else:
-#            enemy03 = Enemy01()
-#            enemy04 = Enemy01()
-#            enemy05 = Enemy01()
-#            
-#            enemy03.rect.x = 850
-#            enemy03.rect.y = 550
-#            enemy03.player = player
-#            enemy03.level = current_level
-#            player.level.enemy_list.add(enemy03)
-#            
-#            enemy04.rect.x = 850
-#            enemy04.rect.y = 350
-#            enemy04.player = player
-#            enemy04.level = current_level
-#            player.level.enemy_list.add(enemy04)
-#            
-#            enemy05.rect.x = 850
-#            enemy05.rect.y = 150
-#            enemy05.player = player
-#            enemy05.level = current_level
-#            player.level.enemy_list.add(enemy05)
-=======
         global boss_spawn
         
         
@@ -1249,21 +1206,21 @@ def main(current_level_no = 0):
             if current_time > last_minion + 10000:
 
                 
-                minion1 = Enemy01()
+                minion1 = EnemyAI_2()
                 minion1.rect.x = 700
                 minion1.rect.y = 150
                 minion1.player = player
                 minion1.level = current_level
                 player.level.enemy_list.add(minion1)
             
-                minion2 = Enemy01()
+                minion2 = EnemyAI_2()
                 minion2.rect.x = 600
                 minion2.rect.y = 150
                 minion2.player = player
                 minion2.level = current_level
                 player.level.enemy_list.add(minion2)
                 
-                minion3 = Enemy01()
+                minion3 = EnemyAI_2()
                 minion3.rect.x = 500
                 minion3.rect.y = 150
                 minion3.player = player
@@ -1290,7 +1247,7 @@ def main(current_level_no = 0):
                     enemy_type = random.randint(0,1)
                     
                     if enemy_type == 1:
-                        enemy02 = Enemy03()
+                        enemy02 = EnemyAI_1()
                         enemy02.rect.x = 250  
                         enemy02.rect.y = 150
                     else:  
@@ -1319,7 +1276,6 @@ def main(current_level_no = 0):
          
            
             
->>>>>>> master
         
                 
     def boss_death():
