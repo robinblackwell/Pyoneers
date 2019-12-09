@@ -1276,8 +1276,7 @@ def main(current_level_no = 0):
             
             global last_minion
             
-            
-            if current_time > last_minion + 10000:
+            if current_time > last_minion + 10000 and len(player.level.enemy_AI_list) < 1:
 
                 
                 minion1 = EnemyAI_2(enemy3)
@@ -1285,28 +1284,28 @@ def main(current_level_no = 0):
                 minion1.rect.y = random.randint(150, 300)
                 minion1.player = player
                 minion1.level = current_level
-                player.level.enemy_list.add(minion1)
+                player.level.enemy_AI_list.add(minion1)
             
                 minion2 = EnemyAI_2(enemy3)
                 minion2.rect.x = 800
                 minion2.rect.y = random.randint(150, 300)
                 minion2.player = player
                 minion2.level = current_level
-                player.level.enemy_list.add(minion2)
+                player.level.enemy_AI_list.add(minion2)
                 
-                minion3 = EnemyAI_2(enemy3)
-                minion3.rect.x = 800
-                minion3.rect.y = random.randint(150, 300)
-                minion3.player = player
-                minion3.level = current_level
-                player.level.enemy_list.add(minion3) 
+                # minion3 = EnemyAI_2(enemy3)
+                # minion3.rect.x = 800
+                # minion3.rect.y = random.randint(150, 300)
+                # minion3.player = player
+                # minion3.level = current_level
+                # player.level.enemy_AI_list.add(minion3)
 
                 last_minion = pygame.time.get_ticks()
             else:
                 pass
         
         else:
-            if kill_count < 1:
+            if kill_count < 5:
         
                 last_enemy = pygame.time.get_ticks()
             
