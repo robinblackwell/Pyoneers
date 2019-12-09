@@ -79,7 +79,7 @@ text4 = font.render("You have escaped Nightmare Valley - Congratulations!", True
 welcomeText1 = "Welcome to Nightmare Valley, where nightmares are manufactured."
 welcomeText2 = "We hope you have a horrible visit <3."
 welcomeText3 = "ps.  Press spacebar to jump. (And climb up vines)"
-welcomeText4 = "ps.  Press 'ctr to shoot'."
+welcomeText4 = "ps.  Press 'z to shoot'."
 bootsText = "ps2.  Press 'a' to invert gravity."
 noText = ""
 currentText = text
@@ -633,8 +633,7 @@ class EnemyAI_2(Enemy):
 
     def updateAI(self,predictedVelocityx,predictedVelocityy) : #(3) updateAI gives paddle a new position when called
         self.change_x = predictedVelocityx
-        if predictedVelocityy-2 < 0: #One possibility for jumping is this 'if' clause
-            self.jump()
+        self.change_y = predictedVelocityy-3
         # Gravity
         self.calc_grav()
  
@@ -644,7 +643,7 @@ class EnemyAI_2(Enemy):
         # for sprite in enemySprite:
         if walkCount3 + 1 >= 7:
             walkCount3 = 0
-        self.image = enemySprite[2][walkCount3//3].convert_alpha()
+        self.image = enemySprite[3][walkCount3//3].convert_alpha()
         # i.rect = i.image.get_rect()
         walkCount3 += 1
         
@@ -897,10 +896,10 @@ class Level():
                     self.item_message_list3.add(Platform(noticeBoard, x, y))
                 elif tile == 3.1:
                     self.item_message_list5.add(Platform(noticeBoard, x, y))
-                # elif tile == 4:
-                #     self.portal_list2.add(Platform(portal,x,y))
                 elif tile == 4:
-                    self.portal_list.add(Platform(portal,x,y))
+                    self.portal_list2.add(Platform(portal,x,y))
+                # elif tile == 4:
+                #     self.portal_list.add(Platform(portal,x,y))
                 elif tile == 4.1:
                     self.portal_list.add(Platform(pygame.transform.rotate(portalRed, 90),x,y))
                 elif tile == 5:
@@ -1000,7 +999,6 @@ def main(current_level_no = 0):
     level_list = []
     level_list.append(Level_01(player))
     level_list.append(Level_02(player))
-    level_list.append(Level_03(player))
 
     # Set the current level
     current_level = level_list[current_level_no]
@@ -1014,9 +1012,6 @@ def main(current_level_no = 0):
     if current_level_no == 1:
         player.rect.x = 550
         player.rect.y = 100
-    if current_level_no == 2:
-        player.rect.x = 1408
-        player.rect.y = 3008
     player.change_y = 0
     active_sprite_list.add(player)
 
@@ -1151,7 +1146,7 @@ def main(current_level_no = 0):
                 elif event.key == pygame.K_p:
                     pause()
                     unpause()
-                elif event.key == pygame.K_LCTRL:
+                elif event.key == pygame.K_z:
                     if len(player.level.projectile_list) < 1:
                         projectile = Projectile(player.direction)
                         projectile.rect.x = player.rect.x + 12.5
@@ -1292,7 +1287,7 @@ def main(current_level_no = 0):
             
                 minion2 = EnemyAI_2(enemy3)
                 minion2.rect.x = 800
-                minion2.rect.y = random.randint(150, 300)
+                minion2.rect.y = random.randint(170, 207)
                 minion2.player = player
                 minion2.level = current_level
                 player.level.enemy_AI_list.add(minion2)
@@ -1310,7 +1305,7 @@ def main(current_level_no = 0):
                 pass
         
         else:
-            if kill_count < 5:
+            if kill_count < 0:
         
                 last_enemy = pygame.time.get_ticks()
             
@@ -1464,6 +1459,7 @@ def main(current_level_no = 0):
                 else:
                     # Out of levels. This just exits the program.
                     # You'll want to do something better.
+                    game_complete()
                     done = True
                     
         for platform in player.level.platform_list:
