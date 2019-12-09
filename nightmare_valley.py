@@ -1109,7 +1109,7 @@ def main(current_level_no = 0):
 
     def userEvents():
         global movingRight
-        global movingLeft
+        global movingLeftgir 
         global standing
         global walkCount12
         global walkCount2
