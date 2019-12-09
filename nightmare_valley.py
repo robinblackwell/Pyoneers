@@ -52,6 +52,7 @@ walkCount2 = 0
 # other general global variables
 last_enemy = 0
 kill_count = 0
+boss_last_fired = 0
 
 
 # text list for auxiliary functions
@@ -584,6 +585,10 @@ class Boss(Enemy): # boss - y-axis tracker
     
     def update(self):
         """ Move the enemy. """
+        
+        global boss_last_fired
+        global player
+        
         # Gravity
         self.calc_grav()
  
@@ -596,6 +601,16 @@ class Boss(Enemy): # boss - y-axis tracker
             self.change_x = 0
         
         self.rect.x += self.change_x
+        
+        boss_last_fired = pygame.time.get_ticks()
+        
+        #if pygame.time.get_ticks() - last_fired > 2000: # minimum time between projectiles to prevent spamming
+         #   projectile = Projectile(self.direction)
+          #  projectile.rect.x = self.rect.x + 12.5
+           # projectile.rect.y = self.rect.y + 20
+            #player.level.projectile_list.add(projectile)
+            #boss_last_fired = pygame.time.get_ticks()          
+       
             
         # See if we hit anything
         block_hit_list = pygame.sprite.spritecollide(self, self.level.platform_list, False)
@@ -1257,12 +1272,10 @@ def main():
     
     
     # vital for the mac issue pt3
+    
     pygame.quit()
     os._exit(0) 
 
-    
-    # Loop until the user clicks the close button.
-    done = False
 
     # Create the player
     player = Player()
@@ -1276,12 +1289,7 @@ def main():
     active_sprite_list = pygame.sprite.Group()
     player.level = current_level
 
-    player.rect.x = 340
-    player.rect.y = 450
-    active_sprite_list.add(player)
-
-    pygame.quit()
-    os._exit(0)
+   
 
 
 if __name__ == "__main__":
