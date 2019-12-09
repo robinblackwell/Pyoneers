@@ -57,6 +57,8 @@ standing = True
 isJump = False
 walkCount12 = 0
 walkCount2 = 0
+walkCount3 = 0
+
 last_enemy = 0
 kill_count = 0
 current_time = 0
@@ -76,12 +78,13 @@ text4 = font.render("You have escaped Nightmare Valley - Congratulations!", True
 welcomeText1 = "Welcome to Nightmare Valley, the place where nightmares are manufactured."
 welcomeText2 = "We hope you have a horrible visit <3."
 welcomeText3 = "ps.  Press spacebar to jump."
+welcomeText4 = "ps.  Press 'ctr to shoot'."
 bootsText = "ps2.  Press 'a' to invert gravity."
 noText = ""
 currentText = text
 
 strList = [
-    welcomeText1, welcomeText2, welcomeText3, bootsText
+    welcomeText1, welcomeText2, welcomeText3, welcomeText4, bootsText
     ]
 
 introOn = True
@@ -100,6 +103,36 @@ charDead = getImage("playerDead.png")
 jumpRight = getImage("jumpRight.png")
 jumpLeft = getImage("jumpLeft.png")
 
+# Enemy sprites
+enemy1 = [
+    getImage("/enemies/enemy_1/enemy_1_1.png"),
+    getImage("/enemies/enemy_1/enemy_1_2.png"),
+    getImage("/enemies/enemy_1/enemy_1_3.png"),
+    # getImage("/enemies/enemy_1/enemy_1_3.png"),
+]
+
+enemy2 = [
+    getImage("/enemies/enemy_2/enemy_2_1.png"),
+    getImage("/enemies/enemy_2/enemy_2_1.png"),
+]
+
+enemy3 = [
+    getImage("/enemies/enemy_3/enemy_3_1.png"),
+    getImage("/enemies/enemy_3/enemy_3_1.png")
+]
+
+enemy4 = [
+    getImage("/enemies/enemy_4/enemy_4_1.png"),
+    getImage("/enemies/enemy_4/enemy_4_1.png")
+]
+bossSprite = [
+    getImage("/enemies/boss/boss.png"),
+    getImage("/enemies/boss/boss.png")
+]
+
+enemySprite = [enemy1, enemy2, enemy4, enemy3, bossSprite]
+
+
 # Background
 menuBg = getImage("menu_bg.png")
 currentBg = menuBg
@@ -116,6 +149,7 @@ house = getImage("house.png")
 vine = getImage("vine.png")
 noticeBoard = getImage("noticeBoard.png")
 portal = getImage("portal.png")
+portalRed = getImage("portalRed.png")
 bgY = 0
 bgX = 0
 
@@ -377,14 +411,16 @@ class Platform(pygame.sprite.Sprite):
 
 class Enemy(pygame.sprite.Sprite):
     
-    def __init__(self):
+    def __init__(self, enemySprite):
         """ Constructor function """
 
+        self.enemySprite = enemySprite
+        
         # Call the parent's constructor
         super().__init__()
 
         # Set player to sprite image and keep alpha levels the same a png source
-        self.image = charStanding[0].convert_alpha()
+        self.image = enemySprite[0].convert_alpha()
 
         # Set a referance to the image rect.
         self.rect = self.image.get_rect()
@@ -426,7 +462,17 @@ class Enemy01(Enemy):
         """ Move the enemy. """
         # Gravity
         self.calc_grav()
- 
+
+        global walkCount3
+        global enemySprite
+
+        # for sprite in enemySprite:
+        if walkCount3 + 1 >= 7:
+            walkCount3 = 0
+        self.image = enemySprite[0][walkCount3//3].convert_alpha()
+        # i.rect = i.image.get_rect()
+        walkCount3 += 1
+
         # Move left/right
         if self.player.rect.x < self.rect.x:
             self.change_x = -playerVel/2
@@ -482,6 +528,16 @@ class Enemy02(Enemy):
         # Gravity
         self.calc_grav()
         
+        global walkCount3
+        global enemySprite
+
+        # for sprite in enemySprite:
+        if walkCount3 + 1 >= 7:
+            walkCount3 = 0
+        self.image = enemySprite[1][walkCount3//3].convert_alpha()
+        # i.rect = i.image.get_rect()
+        walkCount3 += 1
+
         self.rect.x += self.change_x
         
         # See if we hit anything
@@ -518,7 +574,7 @@ class EnemyAI_1(Enemy):
     change_y = 0
     boundary_left = 0
     boundary_right = 0
-    
+
     def updateAI(self,predictedVelocityx,predictedVelocityy) : #(3) updateAI gives paddle a new position when called
         self.change_x = predictedVelocityx
         if predictedVelocityy-2 < 0: #One possibility for jumping is this 'if' clause
@@ -526,6 +582,16 @@ class EnemyAI_1(Enemy):
         # Gravity
         self.calc_grav()
  
+        global walkCount3
+        global enemySprite
+
+        # for sprite in enemySprite:
+        if walkCount3 + 1 >= 7:
+            walkCount3 = 0
+        self.image = enemySprite[2][walkCount3//3].convert_alpha()
+        # i.rect = i.image.get_rect()
+        walkCount3 += 1
+        
         # Move left/right
         self.rect.x += self.change_x
  
@@ -563,7 +629,7 @@ class EnemyAI_2(Enemy):
     change_y = 0
     boundary_left = 0
     boundary_right = 0
-    
+
     def updateAI(self,predictedVelocityx,predictedVelocityy) : #(3) updateAI gives paddle a new position when called
         self.change_x = predictedVelocityx
 
@@ -571,6 +637,16 @@ class EnemyAI_2(Enemy):
         # Gravity
         self.calc_grav()
  
+        global walkCount3
+        global enemySprite
+
+        # for sprite in enemySprite:
+        if walkCount3 + 1 >= 7:
+            walkCount3 = 0
+        self.image = enemySprite[3][walkCount3//3].convert_alpha()
+        # i.rect = i.image.get_rect()
+        walkCount3 += 1
+
         # Move left/right
         self.rect.x += self.change_x
  
@@ -608,6 +684,7 @@ class Boss(Enemy): # boss - y-axis tracker
     change_x = 0
     change_y = 0
     
+
     def update(self):
         """ Move the enemy. """
         
@@ -617,6 +694,16 @@ class Boss(Enemy): # boss - y-axis tracker
         
         # Gravity
         self.calc_grav()
+
+        global walkCount3
+        global enemySprite
+
+        # for sprite in enemySprite:
+        if walkCount3 + 1 >= 7:
+            walkCount3 = 0
+        self.image = enemySprite[4][walkCount3//3].convert_alpha()
+        # i.rect = i.image.get_rect()
+        walkCount3 += 1
  
         # Move left/right
         if self.player.rect.y < self.rect.y:
@@ -694,11 +781,13 @@ class Level():
         self.projectile_list = spriteGroup()
         self.ladder_list = spriteGroup()
         self.portal_list = spriteGroup()
+        self.portal_list2 = spriteGroup()
         self.boss_list = spriteGroup()
         self.item_message_list1 = spriteGroup()
         self.item_message_list2 = spriteGroup()
         self.item_message_list3 = spriteGroup()
         self.item_message_list4 = spriteGroup()
+        self.item_message_list5 = spriteGroup()
 
         self.spriteList = [
             self.platform_list,
@@ -709,11 +798,13 @@ class Level():
             self.projectile_list,
             self.ladder_list,
             self.portal_list,
+            self.portal_list2,
             self.boss_list,
             self.item_message_list1,
             self.item_message_list2,
             self.item_message_list3,
             self.item_message_list4,
+            self.item_message_list5,
         ]
 
         self.message_list = [
@@ -721,6 +812,7 @@ class Level():
             self.item_message_list2,
             self.item_message_list3,
             self.item_message_list4,
+            self.item_message_list5,
         ]
 
         self.player = player
@@ -801,10 +893,14 @@ class Level():
                     self.item_message_list4.add(Platform(groundTileTop, x, y))
                 elif tile == 3:
                     self.item_message_list3.add(Platform(noticeBoard, x, y))
+                elif tile == 3.1:
+                    self.item_message_list5.add(Platform(noticeBoard, x, y))
+                # elif tile == 4:
+                #     self.portal_list2.add(Platform(portal,x,y))
                 elif tile == 4:
                     self.portal_list.add(Platform(portal,x,y))
                 elif tile == 4.1:
-                    self.item_list.add(Platform(pygame.transform.rotate(portal, 90),x,y))
+                    self.portal_list.add(Platform(pygame.transform.rotate(portalRed, 90),x,y))
                 elif tile == 5:
                     self.ladder_list.add(Platform(vine,x,y))
                 elif tile == 6:
@@ -817,15 +913,6 @@ class Level():
                     self.platform_list.add(Platform(groundTile_platform,x,y,x,x+(3*64),0,0,2,0))
                 elif tile == 8.2:
                     self.platform_list.add(Platform(groundTile_platform,x,random.randint(y-127,y+127),0,0,y-128,y+128,0,2*random.choice((1,-1))))
-#                elif tile == 9.1:
-#                    enemy02 = Enemy02()
-#                    enemy02.rect.x = x
-#                    enemy02.rect.y = y
-#                    enemy02.boundary_left = x - (3*64)
-#                    enemy02.boundary_right = x + (4*64)
-#                    enemy02.player = self.player
-#                    enemy02.level = self
-#                    self.enemy_list.add(enemy02)
                 x += 64
             y += 64
 
@@ -842,14 +929,6 @@ class Level_01(Level):
         
         from level_01_layout import levelLayout
         self.addObjects(levelLayout)
-        
-#        enemy01 = Enemy01()
-#        enemy01.rect.x = 750
-#        enemy01.rect.y = 450
-#        enemy01.player = self.player
-#        enemy01.level = self
-#        self.enemy_list.add(enemy01)
-        
 
 class Level_02(Level):
     """ Definition for level 1. """
@@ -863,7 +942,7 @@ class Level_02(Level):
         from level_02_layout import levelLayout
         self.addObjects(levelLayout)
         
-        enemyAI_1 = EnemyAI_1()
+        enemyAI_1 = EnemyAI_1(enemy2)
         enemyAI_1.rect.x = 750
         enemyAI_1.rect.y = 450
         enemyAI_1.player = self.player
@@ -871,7 +950,7 @@ class Level_02(Level):
         self.enemy_AI_list.add(enemyAI_1)
         self.enemy_list.add(enemyAI_1)
         
-        enemyAI_2 = EnemyAI_2()
+        enemyAI_2 = EnemyAI_2(enemy2)
         enemyAI_2.rect.x = 200
         enemyAI_2.rect.y = 450
         enemyAI_2.player = self.player
@@ -1081,12 +1160,6 @@ def main(current_level_no = 0):
                         projectile.rect.y = player.rect.y + 20
                         player.level.projectile_list.add(projectile)
                         last_fired = pygame.time.get_ticks()
-                else:
-                    movingLeft = False
-                    movingRight = False
-                    standing = True
-                    walkCount12 = 0
-                    walkCount2 = 0
 
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_LEFT and player.change_x < 0:
@@ -1206,36 +1279,33 @@ def main(current_level_no = 0):
             if current_time > last_minion + 10000:
 
                 
-                minion1 = EnemyAI_2()
-                minion1.rect.x = 700
-                minion1.rect.y = 150
+                minion1 = EnemyAI_2(enemy3)
+                minion1.rect.x = 800
+                minion1.rect.y = random.randint(150, 300)
                 minion1.player = player
                 minion1.level = current_level
                 player.level.enemy_list.add(minion1)
             
-                minion2 = EnemyAI_2()
-                minion2.rect.x = 600
-                minion2.rect.y = 150
+                minion2 = EnemyAI_2(enemy3)
+                minion2.rect.x = 800
+                minion2.rect.y = random.randint(150, 300)
                 minion2.player = player
                 minion2.level = current_level
                 player.level.enemy_list.add(minion2)
                 
-                minion3 = EnemyAI_2()
-                minion3.rect.x = 500
-                minion3.rect.y = 150
+                minion3 = EnemyAI_2(enemy3)
+                minion3.rect.x = 800
+                minion3.rect.y = random.randint(150, 300)
                 minion3.player = player
                 minion3.level = current_level
                 player.level.enemy_list.add(minion3) 
-                   
-                
+
                 last_minion = pygame.time.get_ticks()
             else:
                 pass
         
         else:
-        
-      
-            if kill_count < 6:
+            if kill_count < 1:
         
                 last_enemy = pygame.time.get_ticks()
             
@@ -1243,19 +1313,17 @@ def main(current_level_no = 0):
         
         
                 if enemy_spawnpoint < 2:
-                
                     enemy_type = random.randint(0,1)
-                    
                     if enemy_type == 1:
-                        enemy02 = EnemyAI_1()
+                        enemy02 = EnemyAI_1(enemy3)
                         enemy02.rect.x = 250  
                         enemy02.rect.y = 150
                     else:  
-                        enemy02 = Enemy01()
+                        enemy02 = Enemy01(enemy1)
                         enemy02.rect.x = 250
                         enemy02.rect.y = 150
                 else:
-                    enemy02 = Enemy02()
+                    enemy02 = Enemy02(enemy2)
                     enemy02.rect.x = 800
                     enemy02.rect.y = 550
                 
@@ -1265,18 +1333,14 @@ def main(current_level_no = 0):
         
             else:
     
-                boss = Boss()
-                boss.rect.x = 900
-                boss.rect.y = 150
+                boss = Boss(bossSprite)
+                boss.rect.x = 800
+                boss.rect.y = 250
                 boss.player = player
                 boss.level = current_level
                 player.level.boss_list.add(boss)
                 boss_spawn = True
             
-         
-           
-            
-        
                 
     def boss_death():
     
@@ -1369,8 +1433,6 @@ def main(current_level_no = 0):
         
         if current_level_no == 1:
              #AI for enemy
-             #toPredict = df.append({'player.rect.x-enemy02.rect.x': (player.rect.x-player.level.enemy02.rect.x), 'player.rect.y-enemy02.rect.y': (player.rect.y-player.level.enemy02.rect.y)}, ignore_index= True)
-             #print(clf.predict(toPredict))
              for enemy in player.level.enemy_AI_list:
                  toPredict = df.append({'player.rect.x-enemy02.rect.x': (player.rect.x-enemy.rect.x),
                                         'player.rect.y-enemy02.rect.y': (player.rect.y-enemy.rect.y)}, ignore_index=True)
@@ -1385,8 +1447,6 @@ def main(current_level_no = 0):
         
         playVideo(clip)
         playSound(bgMusic)
-        # showMessage(current_level.message_list, welcomeText)
-        # showMessage(current_level.item_message_list2, bootsText)
         redrawWindow()
     
     
@@ -1394,45 +1454,7 @@ def main(current_level_no = 0):
     pygame.quit()
     os._exit(0) 
 
-    
-#    # Loop until the user clicks the close button.
-#    done = False
-#
-#    # Create the player
-#    player = Player()
-#
-#    # Create all the levels
-#    level_list = Level_01(player)
-#
-#    # Set the current level
-#    current_level = level_list
-#
-#    active_sprite_list = pygame.sprite.Group()
-#    player.level = current_level
-#
-#    player.rect.x = 340
-#    player.rect.y = 450
-#    active_sprite_list.add(player)
-#
-#    pygame.quit()
-#    os._exit(0)
 
 
 if __name__ == "__main__":
     main()
-
-
-# TODO
-# - Add boots to game.
-# - Invert gravity when boots are worn.
-# - Add parallax effect to BG.
-# TO ANIMATE:
-    # - Glowing portal 
-    # - Being spit out of portal 
-    # - Vine moving 
-    # - Fireflies
-    # - House smoke
-
-
-# https: // www.youtube.com/watch?v = UdsNBIzsmlI
-# https: // www.youtube.com/watch?v = HCWI2f7tQnY
