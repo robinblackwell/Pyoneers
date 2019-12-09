@@ -103,21 +103,24 @@ enemy1 = [
 
 enemy2 = [
             getImage("/enemies/enemy_2/enemy_2_1.png"),
-            getImage("/enemies/enemy_1/enemy_1_1.png")
+            getImage("/enemies/enemy_2/enemy_2_1.png"),
         ]
 
 enemy3 = [
+            getImage("/enemies/enemy_3/enemy_3_1.png"),
             getImage("/enemies/enemy_3/enemy_3_1.png")
         ]
 
 enemy4 = [
+            getImage("/enemies/enemy_4/enemy_4_1.png"),
             getImage("/enemies/enemy_4/enemy_4_1.png")
         ]
-boss = [
+bossSprite = [
+            getImage("/enemies/boss/boss.png"),
             getImage("/enemies/boss/boss.png")
         ]
 
-enemySprite = [enemy1]
+enemySprite = [enemy1, enemy2, enemy3, enemy4, bossSprite]
 
 # Background
 menuBg = getImage("menu_bg.png")
@@ -470,7 +473,17 @@ class Enemy01(Enemy): # x-axis tracker
         """ Move the enemy. """
         # Gravity
         self.calc_grav()
- 
+
+        global walkCount3
+        global enemySprite
+
+        # for sprite in enemySprite:
+        if walkCount3 + 1 >= 7:
+            walkCount3 = 0
+        self.image = enemySprite[0][walkCount3//3].convert_alpha()
+        # i.rect = i.image.get_rect()
+        walkCount3 += 1
+
         # Move left/right
         if self.player.rect.x < self.rect.x:
             self.change_x = -playerVel/2
@@ -525,6 +538,16 @@ class Enemy02(Enemy): # floor crawler
         """ Move the enemy. """
         # Gravity
         self.calc_grav()
+
+        global walkCount3
+        global enemySprite
+
+        # for sprite in enemySprite:
+        if walkCount3 + 1 >= 7:
+            walkCount3 = 0
+        self.image = enemySprite[1][walkCount3//3].convert_alpha()
+        # i.rect = i.image.get_rect()
+        walkCount3 += 1
         
         self.rect.x += self.change_x
         
@@ -571,6 +594,16 @@ class Enemy03(Enemy): # super slow guy - will be replaced by AI jumper
         """ Move the enemy. """
         # Gravity
         self.calc_grav()
+
+        global walkCount3
+        global enemySprite
+
+        # for sprite in enemySprite:
+        if walkCount3 + 1 >= 7:
+            walkCount3 = 0
+        self.image = enemySprite[2][walkCount3//3].convert_alpha()
+        # i.rect = i.image.get_rect()
+        walkCount3 += 1
         
         self.rect.x += self.change_x
         
@@ -621,7 +654,17 @@ class Boss(Enemy): # boss - y-axis tracker
         
         # Gravity
         self.calc_grav()
- 
+
+        global walkCount3
+        global enemySprite
+
+        # for sprite in enemySprite:
+        if walkCount3 + 1 >= 7:
+            walkCount3 = 0
+        self.image = enemySprite[4][0].convert_alpha()
+        # i.rect = i.image.get_rect()
+        walkCount3 += 1
+
         # Move left/right
         if self.player.rect.y < self.rect.y:
             self.change_y = -playerVel/2
@@ -730,25 +773,16 @@ class Level():
     def animateEnemies(self):
         global walkCount3
         global enemySprite
-
-        if walkCount3 + 1 >= 7:
-            walkCount3 = 0
+        
+       
 
         for i in self.enemy_list:
             for sprite in enemySprite:
+                if walkCount3 + 1 >= 7:
+                    walkCount3 = 0
                 i.image = sprite[walkCount3//3].convert_alpha()
-                i.rect = i.image.get_rect()
-                print()
-                print("i.image{}".format(i.image))
-                # print("i.image{}".format(i.image))
-                print()
+                # i.rect = i.image.get_rect()
                 walkCount3 += 1
-                
-
-        # enemy02.image = setImage(charLeft[walkCount2//3])
-
-        # print(self.enemy_list)
-
     
 
     def update(self): 
@@ -881,6 +915,16 @@ class Level_01(Level):
         enemy02.player = self.player
         enemy02.level = self
         self.enemy_list.add(enemy02)
+
+        global walkCount3
+        global enemySprite
+
+        for sprite in enemySprite:
+            if walkCount3 + 1 >= 7:
+                walkCount3 = 0
+            self.image = sprite[walkCount3//3].convert_alpha()
+            # i.rect = i.image.get_rect()
+            walkCount3 += 1
         
 
 class Level_02(Level):
@@ -901,6 +945,7 @@ class Level_02(Level):
         enemy02.player = self.player
         enemy02.level = self
         self.enemy_list.add(enemy02)
+        
 
 
 class Level_03(Level):
@@ -970,7 +1015,7 @@ def main():
 
             # Update items in the level
             current_level.update()
-            current_level.animateEnemies()
+            # current_level.animateEnemies()
             active_sprite_list.update()
 
         pygame.display.flip()
@@ -1210,15 +1255,15 @@ def main():
                 enemy_type = random.randint(0,1)
                 
                 if enemy_type == 1:
-                    enemy02 = Enemy03()
+                    enemy02 = Enemy03(enemySprite[0])
                     enemy02.rect.x = 200
                     enemy02.rect.y = 150
                 else:  
-                    enemy02 = Enemy01()
+                    enemy02 = Enemy01(enemySprite[0])
                     enemy02.rect.x = 200
                     enemy02.rect.y = 150
             else:
-                enemy02 = Enemy02()
+                enemy02 = Enemy02(enemySprite[0])
                 enemy02.rect.x = 850
                 enemy02.rect.y = 550
         
@@ -1228,9 +1273,9 @@ def main():
         
         else:
             
-            boss = Boss()
-            boss.rect.x = 900
-            boss.rect.y = 150
+            boss = Boss(bossSprite)
+            boss.rect.x = 800
+            boss.rect.y = 350
             boss.player = player
             boss.level = current_level
             player.level.enemy_list.add(boss)
@@ -1251,7 +1296,7 @@ def main():
     while not done:
         
         gameIntro()
-        global boss
+        # global boss
 
         if player.rect.bottom == SCREEN_HEIGHT or player.rect.bottom <= 0:
             game_over()
