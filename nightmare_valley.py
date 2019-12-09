@@ -28,7 +28,6 @@ def playVideo(videoToPlay):
 
 # Global variables
 FPS = 24
-levelLimit = -1000
 
 # Character
 gravity = 2.5
@@ -158,14 +157,6 @@ class Player(pygame.sprite.Sprite):
                 # Otherwise if we are moving left, do the opposite.
                 self.rect.left = block.rect.right
         
-#        for block in block_hit_list:
-#            # If we are moving right, set our right side to the left side of the item we hit
-#            if block.change_x < 0:
-#                self.rect.right = block.rect.left
-#            elif block.change_x > 0:
-#                # Otherwise if we are moving left, do the opposite.
-#                self.rect.left = block.rect.right
-        
         boot_hit = blocklist.spritecollide(self, self.level.boot_list, False)
         for boot in boot_hit:
             boot.kill()
@@ -176,7 +167,6 @@ class Player(pygame.sprite.Sprite):
 
         # Check and see if we hit anything
         block_hit_list = blocklist.spritecollide(self, self.level.platform_list, False)
-
         for block in block_hit_list:
             # Reset our position based on the top/bottom of the object.
             if self.change_y > 0:
@@ -194,43 +184,6 @@ class Player(pygame.sprite.Sprite):
             if enemy.rect.top > self.rect.bottom - 40:
                 enemy.kill()
                 self.change_y = -20
-                
-#        block_hit_list = blocklist.spritecollide(self, self.level.platform_list, False)
-#
-#        for block in block_hit_list:
-#            # Reset our position based on the left/right of the object.
-#            if block.change_x < 0:
-#                self.rect.right = block.rect.left
-#            else:
-#                # Otherwise if we are moving left, do the opposite.
-#                self.rect.left = block.rect.right
-#        
-#        block_hit_list = blocklist.spritecollide(self, self.level.platform_list, False)
-#
-#        for block in block_hit_list:
-#            if block.change_x != 0:
-#                if block.change_y < 0:
-#                    self.rect.bottom = block.rect.top
-#                else:
-#                    self.rect.top = block.rect.bottom
-#        
-#        block_hit_list = blocklist.spritecollide(self, self.level.platform_list, False)
-#
-#        for block in block_hit_list:
-#            if self.rect.bottom == block.rect.top:
-#                self.change_x += block.rect.x
-                
-        block_hit_list = blocklist.spritecollide(self, self.level.platform_list, False)                
-
-        for block in self.level.platform_list:
-            cur_pos_y = block.rect.y + self.level.world_shift_y
-            if cur_pos_y > block.boundary_bottom or cur_pos_y < block.boundary_top:
-                block.change_y *= -1
-     
-            cur_pos_x = block.rect.x - self.level.world_shift_x
-            if cur_pos_x < block.boundary_left or cur_pos_x > block.boundary_right:
-                block.change_x *= -1
-
 
     def calc_grav(self):
         """ Calculate effect of gravity. """
@@ -239,11 +192,6 @@ class Player(pygame.sprite.Sprite):
         else:
             global gravity
             self.change_y += gravity
-
-        # See if we are on the ground.
-        if self.rect.y >= SCREEN_HEIGHT - self.rect.height and self.change_y >= 0:
-            self.change_y = 0
-            self.rect.y = SCREEN_HEIGHT - self.rect.height
             
         # See if we are on a ladder.
         if pygame.sprite.spritecollide(self, self.level.ladder_list, False):
@@ -269,9 +217,9 @@ class Player(pygame.sprite.Sprite):
         global jumpHeight, movingLeft, movingRight, standing, isJumpRight, isJumpLeft, walkCount12, walkCount2
 
         # move down a bit and see if there is a platform below us. Move down 2 pixels because it doesn't work well if we only move down 1 when working with a platform moving down.
-        self.rect.y += 1
+        self.rect.y += 5
         platform_hit_list = pygame.sprite.spritecollide(self, self.level.platform_list, False)
-        self.rect.y -= 1
+        self.rect.y -= 5
 
             # If it is ok to jump, set our speed upwards
         if len(platform_hit_list) > 0 or self.rect.bottom >= SCREEN_HEIGHT:
@@ -305,13 +253,6 @@ class Player(pygame.sprite.Sprite):
     def go_up(self):
         global movingLeft, movingRight, standing, walkCount12, walkCount2, isJumpLeft, isJumpRight
         self.change_y = -playerVel*2.5
-#        movingLeft = False
-#        movingRight = False
-#        isJumpRight = False
-#        isJumpLeft = False
-#        standing = True
-#        walkCount12 = 0
-#        walkCount2 = 0
 
     def stop(self):
         # Called when the user lets off the keyboard.
@@ -368,13 +309,55 @@ class Platform(pygame.sprite.Sprite):
         
         self.rect.x += x
         self.rect.y += y
-    
-    def update(self):
 
-        # Move left/right/up/down
+    def updatePlayerPos(self, playerObj):
+        
         self.rect.x += self.change_x
-        self.rect.y += self.change_y
+        # See if we hit the player
+        hit = pygame.sprite.collide_rect(self, playerObj)
+        if hit:
+            # We did hit the player. Shove the player around and
+            # assume he/she won't hit anything else.
 
+            # If we are moving right, set our right side
+            # to the left side of the item we hit
+            if self.change_x < 0:
+                playerObj.rect.right = self.rect.left
+            else:
+                # Otherwise if we are moving left, do the opposite.
+                playerObj.rect.left = self.rect.right
+        
+        # Move up/down
+        self.rect.y += self.change_y
+ 
+        # Check and see if we the player
+        hit = pygame.sprite.collide_rect(self, playerObj)
+        if hit:
+            # We did hit the player. Shove the player around and
+            # assume he/she won't hit anything else.
+ 
+            # Reset our position based on the top/bottom of the object.
+            if self.change_y < 0:
+                playerObj.rect.bottom = self.rect.top
+            else:
+                playerObj.rect.top = self.rect.bottom
+ 
+        # Check the boundaries and see if we need to reverse
+        # direction.
+#        if self.rect.bottom > self.boundary_bottom or self.rect.top < self.boundary_top:
+#            self.change_y *= -1
+ 
+        cur_pos_x = self.rect.x - playerObj.level.world_shift_x
+        if cur_pos_x < self.boundary_left or cur_pos_x > self.boundary_right:
+            self.change_x *= -1
+            
+        cur_pos_y = self.rect.y + playerObj.level.world_shift_y
+        if cur_pos_y > self.boundary_bottom or cur_pos_y < self.boundary_top:
+            self.change_y *= -1
+            
+        if playerObj.rect.bottom == self.rect.top:
+            playerObj.rect.x += self.change_x
+            
 
 class Enemy(pygame.sprite.Sprite):
     
@@ -402,11 +385,6 @@ class Enemy(pygame.sprite.Sprite):
         else:
             global gravity
             self.change_y += gravity
-
-        # See if we are on the ground.
-        if self.rect.y >= SCREEN_HEIGHT - self.rect.height and self.change_y >= 0:
-            self.change_y = 0
-            self.rect.y = SCREEN_HEIGHT - self.rect.height
  
     def jump(self):
         #  Called when user hits 'jump' button.
@@ -420,7 +398,7 @@ class Enemy(pygame.sprite.Sprite):
             # If it is ok to jump, set our speed upwards
         if len(platform_hit_list) > 0 or self.rect.bottom >= SCREEN_HEIGHT:
             self.change_y = jumpHeight
-            # Set player animation for when jumping
+
             
 class Enemy01(Enemy):
 
@@ -480,7 +458,7 @@ class Enemy01(Enemy):
 class Enemy02(Enemy):
 
     # Set speed vector of enemy
-    change_x = -4
+    change_x = -0.2
     change_y = 0
     
     def update(self):
@@ -516,11 +494,35 @@ class Enemy02(Enemy):
  
             # Stop our vertical movement
             self.change_y = 0
-            
-        block_hit_list = pygame.sprite.spritecollide(self, self.level.platform_list, False)
-        for block in block_hit_list:
-            if block.edge == True:
-                self.change_x *= -1
+                
+
+class Enemy03(Enemy):
+    
+    change_x = -1
+    change_y = 0
+    boundary_left = 0
+    boundary_right = 0
+    
+    def update(self):
+#        self.calc_grav()
+        self.rect.x += self.change_x
+        
+        if (self.rect.left < self.boundary_left) or (self.rect.right > self.boundary_right):
+            self.change_x *= -1
+        
+        self.rect.y += self.change_y
+#        # Check and see if we hit anything
+#        block_hit_list = pygame.sprite.spritecollide(self, self.level.platform_list, False)
+#        for block in block_hit_list:
+# 
+#            # Reset our position based on the top/bottom of the object.
+#            if self.change_y > 0:
+#                self.rect.bottom = block.rect.top
+#            elif self.change_y < 0:
+#                self.rect.top = block.rect.bottom
+# 
+#            # Stop our vertical movement
+#            self.change_y = 0
 
 
 class Level():
@@ -610,7 +612,6 @@ class Level():
         self.world_shift_y += shift_y
 
         # Go through all the sprite lists and shift
-        # Go through all the sprite lists and shift
         for i in range(len(self.spriteList)):
             for item in self.spriteList[i]:
              item.rect.x += shift_x
@@ -662,6 +663,17 @@ class Level():
                     self.platform_list.add(Platform(groundTile_platform,x,y))
                 elif tile == 8.1:
                     self.platform_list.add(Platform(groundTile_platform,x,y,x,x+(3*64),0,0,2,0))
+                elif tile == 8.2:
+                    self.platform_list.add(Platform(groundTile_platform,x,random.randint(y-127,y+127),0,0,y-128,y+128,0,2*random.choice((1,-1))))
+#                elif tile == 9.1:
+#                    enemy02 = Enemy03()
+#                    enemy02.rect.x = x
+#                    enemy02.rect.y = y
+#                    enemy02.boundary_left = x - (3*64)
+#                    enemy02.boundary_right = x + (4*64)
+#                    enemy02.player = self.player
+#                    enemy02.level = self
+#                    self.enemy_list.add(enemy03)
                 x += 64
             y += 64
 
@@ -685,13 +697,6 @@ class Level_01(Level):
 #        enemy01.player = self.player
 #        enemy01.level = self
 #        self.enemy_list.add(enemy01)
-        
-        enemy02 = Enemy02()
-        enemy02.rect.x = 500
-        enemy02.rect.y = 450
-        enemy02.player = self.player
-        enemy02.level = self
-        self.enemy_list.add(enemy02)
         
 
 class Level_02(Level):
@@ -805,23 +810,23 @@ def main(current_level_no = 0):
         if movingLeft and not gravityIsNegative:
             setImage(charLeft[walkCount2//3])
             walkCount2 += 1
-        if movingRight and not gravityIsNegative:
+        elif movingRight and not gravityIsNegative:
             setImage(charRight[walkCount2//3])
             walkCount2 += 1
-        if isJumpLeft:
+        elif isJumpLeft:
             setImage(jumpLeft)
-        if isJumpRight:
+        elif isJumpRight:
             setImage(jumpRight)
-        if gravityIsNegative:
+        elif gravityIsNegative:
             setImage(pygame.transform.flip(charStanding[walkCount12//3], False, True))
-        if gravityIsNegative and movingLeft:
+        elif gravityIsNegative and movingLeft:
             setImage(pygame.transform.flip(charLeft[walkCount2//3], False, True))
-        if gravityIsNegative and movingRight:
+        elif gravityIsNegative and movingRight:
             setImage(pygame.transform.flip(charRight[walkCount2//3], False, True))
-        if standing and not introOn:
+        elif standing and not introOn:
             setImage(charStanding[walkCount12//3])
             walkCount12 += 1
-        if introOn:
+        elif introOn:
             setImage(pygame.transform.scale(charStanding[walkCount12//3], (int(player.rect.x * 0.9), int(player.rect.y * 1.5))))
             walkCount12 += 1
 
@@ -870,23 +875,30 @@ def main(current_level_no = 0):
                 if pygame.sprite.spritecollide(player, player.level.ladder_list, False):
                     if event.key == pygame.K_SPACE:
                         player.go_up()
-                if event.key == pygame.K_LEFT:
+                    elif event.key == pygame.K_LEFT:
+                        player.go_left()
+                    elif event.key == pygame.K_RIGHT:
+                        player.go_right()
+                    elif event.key == pygame.K_p:
+                        pause()
+                        unpause()
+                elif event.key == pygame.K_LEFT:
                    player.go_left()
-                if event.key == pygame.K_RIGHT:
+                elif event.key == pygame.K_RIGHT:
                    player.go_right()
-                if event.key == pygame.K_SPACE:
+                elif event.key == pygame.K_SPACE:
                    player.jump()
-                if event.key == pygame.K_a:
+                elif event.key == pygame.K_a:
                    player.invertGravity()
-                if event.key == pygame.K_r:  # respawn function by calling the main loop over current scenario
+                elif event.key == pygame.K_r:  # respawn function by calling the main loop over current scenario
                    main(current_level_no)
-                if event.key == pygame.K_q:  # quit function
+                elif event.key == pygame.K_q:  # quit function
                     pygame.quit()
                     os._exit(0)
-                if event.key == pygame.K_p:
+                elif event.key == pygame.K_p:
                     pause()
                     unpause()
-                if event.key == pygame.K_LCTRL:
+                elif event.key == pygame.K_LCTRL:
                     if len(player.level.projectile_list) < 1:
                         projectile = Projectile(player.direction)
                         projectile.rect.x = player.rect.x + 12.5
@@ -1063,10 +1075,12 @@ def main(current_level_no = 0):
         gameIntro()
         global kill_count
 
-        if player.rect.bottom == SCREEN_HEIGHT or player.rect.bottom <= 0:
+        if player.rect.bottom <= 0 or player.rect.top >= SCREEN_HEIGHT:
             game_over()
             game_over2()
         for enemy in player.level.enemy_list:
+            if enemy.rect.bottom <= 0 or enemy.rect.top >= SCREEN_HEIGHT:
+                enemy.kill()
             if pygame.sprite.spritecollide(player, player.level.enemy_list, False):
                 game_over()
                 game_over2()
@@ -1079,7 +1093,7 @@ def main(current_level_no = 0):
                 projectile_enemy_hit = pygame.sprite.spritecollide(projectile, player.level.enemy_list, False)
                 for x in projectile_enemy_hit:
                     projectile.kill()
-                    enemy.kill()
+                    x.kill()
                     kill_count += 1
             projectile_platform_hit = pygame.sprite.spritecollide(projectile, player.level.platform_list, False)
             for y in projectile_platform_hit:
@@ -1103,7 +1117,9 @@ def main(current_level_no = 0):
                     # Out of levels. This just exits the program.
                     # You'll want to do something better.
                     done = True
-        
+                    
+        for platform in player.level.platform_list:
+            platform.updatePlayerPos(player)     
         
         current_time = pygame.time.get_ticks() 
         if current_level_no == 1:
