@@ -1,14 +1,14 @@
 import pygame
 import os  # vital to fix the mac issue pt1
 from moviepy.editor import VideoFileClip #Module needed to play video.
-import pyganim
+import random # allows random number generation to add unpredictability
 
 # Screen dimensions
 SCREEN_WIDTH = 1024
 SCREEN_HEIGHT = 640
 
 pygame.init()
-pygame.mixer.init()
+pygame.mixer.init() #used for multimedia functions
 
 screen = pygame.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])
 
@@ -32,6 +32,7 @@ levelLimit = -1000
 
 # Character
 gravity = 3.6
+
 gravityIsNegative = False
 jumpHeight = -27.5
 playerBehind = 9
@@ -49,16 +50,24 @@ walkCount12 = 0
 walkCount2 = 0
 walkCount3 = 0
 
+
+# other general global variables
+last_enemy = 0
+kill_count = 0
+boss_last_fired = 0
+
+
+# text list for auxiliary functions
 fontMedium = pygame.font.Font("assets/IBMPlexSerif-Medium.ttf", 22)
 font = pygame.font.Font("assets/IBMPlexSerif-Bold.ttf", 24)
 fontPressStart = pygame.font.Font("assets/PressStart2P.ttf", 26)
 
-text = "You Died. Press 'r' to restart, "
-# text = font.render("You Died. Press 'r' to restart, ", True, (0, 128, 0))
+text = font.render("You Died. Press 'r' to restart, ", True, (0, 128, 0))
 text1_1 = font.render("or 'q' to quit.", True, (0, 128, 0))
 text2 = font.render("Welcome. Please click to start", True, (0, 128, 0))
 text3 = font.render("Paused. Press 'p' to unpause", True, (0, 128, 0))
-welcomeText1 = "Welcome to Nightmare Vally, the place where nightmares are manufactured."
+text4 = font.render("You won - congrats", True, (0, 128, 0))
+welcomeText1 = "Welcome to Nightmare Valley, the place where nightmares are manufactured."
 welcomeText2 = "We hope you have a horrible visit <3."
 welcomeText3 = "ps.  Press spacebar to jump."
 bootsText = "ps2.  Press 'a' to invert gravity."
@@ -115,6 +124,8 @@ menuBg = getImage("menu_bg.png")
 currentBg = menuBg
 bg = getImage("bg.png")
 
+
+# additional items
 groundTileTop = getImage("ground/groundTile_top.png")
 groundTileInner = getImage("ground/groundTile_inner.png")
 groundTileCorner = getImage("ground/groundTile_corner.png")
@@ -215,7 +226,7 @@ class Player(pygame.sprite.Sprite):
     
         enemy_hit_list = pygame.sprite.spritecollide(self, self.level.enemy_list, False)
         for enemy in enemy_hit_list:
-            if enemy.rect.top > self.rect.bottom - 20:
+            if enemy.rect.top > self.rect.bottom - 40:
                 enemy.kill()
                 self.change_y = -20
                 
@@ -449,7 +460,7 @@ class Enemy(pygame.sprite.Sprite):
             self.change_y = jumpHeight
             # Set player animation for when jumping
             
-class Enemy01(Enemy):
+class Enemy01(Enemy): # x-axis tracker
 
     # Set speed vector of enemy
     change_x = 0
@@ -504,10 +515,56 @@ class Enemy01(Enemy):
             self.change_y = 0
             
 
-class Enemy02(Enemy):
+class Enemy02(Enemy): # floor crawler
 
     # Set speed vector of enemy
-    change_x = -4
+    change_x = -8
+    change_y = 0
+    
+    def update(self):
+        """ Move the enemy. """
+        # Gravity
+        self.calc_grav()
+        
+        self.rect.x += self.change_x
+        
+        # See if we hit anything
+        block_hit_list = pygame.sprite.spritecollide(self, self.level.platform_list, False)
+        for block in block_hit_list:
+            # If we are moving right,
+            # set our right side to the left side of the item we hit
+            if self.change_x > 0:
+                self.rect.right = block.rect.left
+                self.change_x *= -1
+            elif self.change_x < 0:
+                # Otherwise if we are moving left, do the opposite.
+                self.rect.left = block.rect.right
+                self.change_x *= -1
+        
+        self.rect.y += self.change_y
+        # Check and see if we hit anything
+        block_hit_list = pygame.sprite.spritecollide(self, self.level.platform_list, False)
+        for block in block_hit_list:
+ 
+            # Reset our position based on the top/bottom of the object.
+            if self.change_y > 0:
+                self.rect.bottom = block.rect.top
+            elif self.change_y < 0:
+                self.rect.top = block.rect.bottom
+ 
+            # Stop our vertical movement
+            self.change_y = 0
+            
+        block_hit_list = pygame.sprite.spritecollide(self, self.level.platform_list, False)
+        for block in block_hit_list:
+            if block.edge == True:
+                self.change_x *= -1
+                
+                
+class Enemy03(Enemy): # super slow guy - will be replaced by AI jumper
+
+    # Set speed vector of enemy
+    change_x = -1
     change_y = 0
     
     def update(self):
@@ -549,6 +606,74 @@ class Enemy02(Enemy):
         #     if block.edge == True:
         #         self.change_x *= -1
 
+
+class Boss(Enemy): # boss - y-axis tracker
+
+    # Set speed vector of enemy
+    change_x = 0
+    change_y = 0
+    
+    def update(self):
+        """ Move the enemy. """
+        
+        global boss_last_fired
+        global player
+        
+        # Gravity
+        self.calc_grav()
+ 
+        # Move left/right
+        if self.player.rect.y < self.rect.y:
+            self.change_y = -playerVel/2
+        if self.player.rect.y > self.rect.y:
+            self.change_y = playerVel/2
+        if self.player.rect.y == self.rect.y:
+            self.change_x = 0
+        
+        self.rect.x += self.change_x
+        
+        boss_last_fired = pygame.time.get_ticks()
+        
+        #if pygame.time.get_ticks() - last_fired > 2000: # minimum time between projectiles to prevent spamming
+         #   projectile = Projectile(self.direction)
+          #  projectile.rect.x = self.rect.x + 12.5
+           # projectile.rect.y = self.rect.y + 20
+            #player.level.projectile_list.add(projectile)
+            #boss_last_fired = pygame.time.get_ticks()          
+       
+            
+        # See if we hit anything
+        block_hit_list = pygame.sprite.spritecollide(self, self.level.platform_list, False)
+        for block in block_hit_list:
+            # If we are moving right,
+            # set our right side to the left side of the item we hit
+            if self.change_x > 0:
+                self.rect.right = block.rect.left
+            elif self.change_x < 0:
+                # Otherwise if we are moving left, do the opposite.
+                self.rect.left = block.rect.right
+ 
+        # Jump up platform if player above
+#        if self.player.rect.bottom + 50 < self.rect.bottom:
+#            for platform in self.level.platform_list:
+#                if ((((self.rect.x + 10) == platform.rect.x-50) and self.change_x > 0) or (((self.rect.x + 10) == platform.rect.x+platform.image.get_size()[0]+50) and self.change_x < 0)) and (self.rect.y < platform.rect.y+150):
+#                    self.jump()
+    
+        # Move up/down
+        self.rect.y += self.change_y
+ 
+        # Check and see if we hit anything
+        block_hit_list = pygame.sprite.spritecollide(self, self.level.platform_list, False)
+        for block in block_hit_list:
+ 
+            # Reset our position based on the top/bottom of the object.
+            if self.change_y > 0:
+                self.rect.bottom = block.rect.top
+            elif self.change_y < 0:
+                self.rect.top = block.rect.bottom
+ 
+            # Stop our vertical movement
+            self.change_y = 0
 
 class Level():
     """ This is a generic super-class used to define a level.
@@ -792,10 +917,13 @@ class Level_03(Level):
 
 
 def main():
-    # boltAnim.play()
+  
+    global kill_count
+  
     # Game settings
     # Loop until the user clicks the close button.
     done = False
+    kill_count = 0
     clock = pygame.time.Clock()
     pygame.display.set_caption("Pyoneers")
 
@@ -912,7 +1040,7 @@ def main():
             pygame.mixer.music.load(soundToPlay)
             pygame.mixer.music.play()
 
-    def userEvents():
+    def userEvents(): # gathers the player inputs
         global movingRight
         global movingLeft
         global standing
@@ -944,14 +1072,14 @@ def main():
                 elif event.key == pygame.K_p:
                     pause()
                     unpause()
-                elif event.key == pygame.K_LCTRL:
+                elif event.key == pygame.K_z:
                     if len(player.level.projectile_list) < 1:
                         projectile = Projectile(player.direction)
                         projectile.rect.x = player.rect.x + 12.5
                         projectile.rect.y = player.rect.y + 20
                         player.level.projectile_list.add(projectile)
                         last_fired = pygame.time.get_ticks()
-                    elif pygame.time.get_ticks() - last_fired > 2000:
+                    elif pygame.time.get_ticks() - last_fired > 2000: # minimum time between projectiles to prevent spamming
                         projectile = Projectile(player.direction)
                         projectile.rect.x = player.rect.x + 12.5
                         projectile.rect.y = player.rect.y + 20
@@ -970,9 +1098,7 @@ def main():
                 if event.key == pygame.K_RIGHT and player.change_x > 0:
                    player.stop()
 
-    # Define what happens when player dies
-    def game_over():
-        player.image.blit(charDead, (0, 0))
+
     def pause(): # a simple pause function to allow the player to temporarily stop the game
 
         currentBg.fill((95, 95, 55))
@@ -981,9 +1107,9 @@ def main():
 
         redrawWindow()
 
-    def unpause():
+    def unpause(): # a separated unpause function to allow the initial pause screen to be returned
         
-        global bg
+        global currentBg
         
         paused = True
         
@@ -992,7 +1118,7 @@ def main():
             for event in pygame.event.get():  
               if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_p:
-                    bg = getImage("bg.png")
+                    currentBg = getImage("bg.png")
                     redrawWindow()
                     player.stop()
                     paused = False  
@@ -1002,11 +1128,10 @@ def main():
                 else:
                    pass
 
-    def showMessage(message, text):
+    def showMessage(message, text): 
         global currentText
         global noText
         
-        # location based event put with other location based events
         for i in message:
             if player.rect.right > (i.rect.x - 100) and player.rect.right < (i.rect.x + 100):
                 currentText = text
@@ -1015,17 +1140,21 @@ def main():
                 currentText = noText
 
     # Define what happens when player dies
-    def game_over():
+    def game_over():  
         player.image.blit(charDead, (0, 0))
         currentBg.fill((100, 100, 100))
         currentBg.blit(text,
                 (500 - text.get_width() // 2, 240 - text.get_height() // 2))
         currentBg.blit(text1_1,
                 (500 - text1_1.get_width() // 2, 340 - text.get_height() // 2))
+        
+        redrawWindow()
+        
+        
 
-    def game_over2():
+    def game_over2(): # a separated reset/quit function to allow the initial game over screen to be returned
 
-        global bg
+        global currentBg
 
         over = True
 
@@ -1034,7 +1163,7 @@ def main():
             for event in pygame.event.get():
               if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_r:
-                    bg = getImage("bg.png")
+                    currentBg = getImage("bg.png")
                     redrawWindow()
                     main()
                     over = False
@@ -1062,20 +1191,75 @@ def main():
                         introOn = False
                         play = True
                         currentBg = bg
+                        
+                        
+    def spawn_arena_enemy(): # a dedicated spawn function for the arena battle - allows variability
+        
+        global last_enemy
+        global enemy02
+        global kill_count
+        
+      
+        if kill_count < 2:
+        
+            enemy_spawnpoint = random.randint(0,1)
+        
+        
+            if enemy_spawnpoint == 1:
+                
+                enemy_type = random.randint(0,1)
+                
+                if enemy_type == 1:
+                    enemy02 = Enemy03()
+                    enemy02.rect.x = 200
+                    enemy02.rect.y = 150
+                else:  
+                    enemy02 = Enemy01()
+                    enemy02.rect.x = 200
+                    enemy02.rect.y = 150
+            else:
+                enemy02 = Enemy02()
+                enemy02.rect.x = 850
+                enemy02.rect.y = 550
+        
+            enemy02.player = player
+            enemy02.level = current_level
+            player.level.enemy_list.add(enemy02)
+        
+        else:
+            
+            boss = Boss()
+            boss.rect.x = 900
+            boss.rect.y = 150
+            boss.player = player
+            boss.level = current_level
+            player.level.enemy_list.add(boss)
+            
+        
+        
+        last_enemy = pygame.time.get_ticks()
+        
+        
+    def game_complete(): # a screen only for those who are worthy
+        
+        currentBg.fill((100, 100, 100))
+        currentBg.blit(text4,
+                (500 - text4.get_width() // 2, 240 - text4.get_height() // 2))
+        redrawWindow()
 
     # -------- Main Program Loop -----------
     while not done:
         
         gameIntro()
+        global boss
 
         if player.rect.bottom == SCREEN_HEIGHT or player.rect.bottom <= 0:
             game_over()
-            redrawWindow()
             game_over2()
         for enemy in player.level.enemy_list:
             if pygame.sprite.spritecollide(player, player.level.enemy_list, False):
                 game_over()
-                pygame.quit()
+                game_over2()
         
         # Projectile collision condition
         for projectile in player.level.projectile_list:
@@ -1083,19 +1267,24 @@ def main():
                 projectile.kill()
             for enemy in player.level.enemy_list:
                 projectile_enemy_hit = pygame.sprite.spritecollide(projectile, player.level.enemy_list, False)
-                for x in projectile_enemy_hit:
+                for x in projectile_enemy_hit:            
+                        projectile.kill()
+                        enemy.kill()
+                        if current_level_no == 1:
+                            kill_count += 1
+                        else:
+                            pass
+                projectile_platform_hit = pygame.sprite.spritecollide(projectile, player.level.platform_list, False)
+                for y in projectile_platform_hit:
                     projectile.kill()
-                    enemy.kill()
-            projectile_platform_hit = pygame.sprite.spritecollide(projectile, player.level.platform_list, False)
-            for y in projectile_platform_hit:
-                projectile.kill()
-                
+         
+        # Portals for advancing to the next level
         for portal in player.level.portal_list:
             portal_hit = pygame.sprite.spritecollide(player, player.level.portal_list, False)
             if portal_hit:
                 if current_level_no == 0:
                     player.rect.x = 320
-                    player.rect.y = 128
+                    player.rect.y = 328
                     player.change_y = 0
                     
                 if current_level_no == 1:
@@ -1112,6 +1301,17 @@ def main():
                     # You'll want to do something better.
                     done = True
         
+        
+        current_time = pygame.time.get_ticks() 
+        if current_level_no == 1:
+           if current_time > last_enemy + 2000:
+               if len(player.level.enemy_list) < 3:
+                spawn_arena_enemy()
+               else:
+                    pass
+           else:
+               pass
+        
         userEvents()
         clock.tick(FPS)
         if current_level_no != 1:
@@ -1127,12 +1327,10 @@ def main():
     
     
     # vital for the mac issue pt3
+    
     pygame.quit()
     os._exit(0) 
 
-    
-    # Loop until the user clicks the close button.
-    done = False
 
     # Create the player
     player = Player()
@@ -1146,12 +1344,7 @@ def main():
     active_sprite_list = pygame.sprite.Group()
     player.level = current_level
 
-    player.rect.x = 340
-    player.rect.y = 450
-    active_sprite_list.add(player)
-
-    pygame.quit()
-    os._exit(0)
+   
 
 
 if __name__ == "__main__":
