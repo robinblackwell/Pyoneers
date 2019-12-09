@@ -38,7 +38,7 @@ def playVideo(videoToPlay):
         pass
 
 # Global variables
-FPS = 24
+FPS = 27
 
 # Character
 gravity = 2.5
@@ -75,16 +75,17 @@ text1_1 = font.render("or 'q' to quit.", True, (0, 128, 0))
 text2 = font.render("Welcome. Please click to start", True, (0, 128, 0))
 text3 = font.render("Paused. Press 'p' to unpause", True, (0, 128, 0))
 text4 = font.render("You have escaped Nightmare Valley - Congratulations!", True, (0, 128, 0))
-welcomeText1 = "Welcome to Nightmare Valley, the place where nightmares are manufactured."
+
+welcomeText1 = "Welcome to Nightmare Valley, where nightmares are manufactured."
 welcomeText2 = "We hope you have a horrible visit <3."
-welcomeText3 = "ps.  Press spacebar to jump."
+welcomeText3 = "ps.  Press spacebar to jump. (And climb up vines)"
 welcomeText4 = "ps.  Press 'ctr to shoot'."
 bootsText = "ps2.  Press 'a' to invert gravity."
 noText = ""
 currentText = text
 
 strList = [
-    welcomeText1, welcomeText2, welcomeText3, welcomeText4, bootsText
+    welcomeText1, welcomeText2, welcomeText3, bootsText, welcomeText4
     ]
 
 introOn = True
@@ -844,7 +845,7 @@ class Level():
         text_objects()
         
         TextSurf, TextRect = text_objects()
-        TextRect.center = ((SCREEN_WIDTH/2), (SCREEN_HEIGHT/2))
+        TextRect.center = ((SCREEN_WIDTH/2), (SCREEN_HEIGHT/2.7))
         screen.blit(TextSurf, TextRect)
 
     def shift_world(self, shift_x, shift_y):
