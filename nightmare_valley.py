@@ -59,6 +59,10 @@ walkCount12 = 0
 walkCount2 = 0
 last_enemy = 0
 kill_count = 0
+current_time = 0
+boss_spawn = False
+last_minion = 0
+boss_health = 20
 
 fontMedium = pygame.font.Font("assets/IBMPlexSerif-Medium.ttf", 22)
 font = pygame.font.Font("assets/IBMPlexSerif-Bold.ttf", 24)
@@ -68,6 +72,7 @@ text = font.render("You Died. Press 'r' to restart, ", True, (0, 128, 0))
 text1_1 = font.render("or 'q' to quit.", True, (0, 128, 0))
 text2 = font.render("Welcome. Please click to start", True, (0, 128, 0))
 text3 = font.render("Paused. Press 'p' to unpause", True, (0, 128, 0))
+text4 = font.render("You have escaped Nightmare Valley - Congratulations!", True, (0, 128, 0))
 welcomeText1 = "Welcome to Nightmare Valley, the place where nightmares are manufactured."
 welcomeText2 = "We hope you have a horrible visit <3."
 welcomeText3 = "ps.  Press spacebar to jump."
@@ -469,7 +474,7 @@ class Enemy01(Enemy):
 class Enemy02(Enemy):
 
     # Set speed vector of enemy
-    change_x = -0.2
+    change_x = -2
     change_y = 0
     
     def update(self):
@@ -597,6 +602,77 @@ class EnemyAI_2(Enemy):
             self.change_y = 0
 
 
+class Boss(Enemy): # boss - y-axis tracker
+
+    # Set speed vector of enemy
+    change_x = 0
+    change_y = 0
+    
+    def update(self):
+        """ Move the enemy. """
+        
+        global boss_last_fired
+        global player
+        global boss_health
+        
+        # Gravity
+        self.calc_grav()
+ 
+        # Move left/right
+        if self.player.rect.y < self.rect.y:
+            self.change_y = -playerVel/2
+        if self.player.rect.y > self.rect.y:
+            self.change_y = playerVel/2
+        if self.player.rect.y == self.rect.y:
+            self.change_x = 0
+        
+        self.rect.x += self.change_x
+        
+        boss_last_fired = pygame.time.get_ticks()
+        
+        #if pygame.time.get_ticks() - last_fired > 2000: # minimum time between projectiles to prevent spamming
+         #   projectile = Projectile(self.direction)
+          #  projectile.rect.x = self.rect.x + 12.5
+           # projectile.rect.y = self.rect.y + 20
+            #player.level.projectile_list.add(projectile)
+            #boss_last_fired = pygame.time.get_ticks()          
+       
+            
+        # See if we hit anything
+        block_hit_list = pygame.sprite.spritecollide(self, self.level.platform_list, False)
+        for block in block_hit_list:
+            # If we are moving right,
+            # set our right side to the left side of the item we hit
+            if self.change_x > 0:
+                self.rect.right = block.rect.left
+            elif self.change_x < 0:
+                # Otherwise if we are moving left, do the opposite.
+                self.rect.left = block.rect.right
+ 
+        # Jump up platform if player above
+#        if self.player.rect.bottom + 50 < self.rect.bottom:
+#            for platform in self.level.platform_list:
+#                if ((((self.rect.x + 10) == platform.rect.x-50) and self.change_x > 0) or (((self.rect.x + 10) == platform.rect.x+platform.image.get_size()[0]+50) and self.change_x < 0)) and (self.rect.y < platform.rect.y+150):
+#                    self.jump()
+    
+        # Move up/down
+        self.rect.y += self.change_y
+ 
+        # Check and see if we hit anything
+        block_hit_list = pygame.sprite.spritecollide(self, self.level.platform_list, False)
+        for block in block_hit_list:
+ 
+            # Reset our position based on the top/bottom of the object.
+            if self.change_y > 0:
+                self.rect.bottom = block.rect.top
+            elif self.change_y < 0:
+                self.rect.top = block.rect.bottom
+ 
+            # Stop our vertical movement
+            self.change_y = 0
+
+
+
 class Level():
     """ This is a generic super-class used to define a level.
         Create a child class for each level with level-specific
@@ -618,6 +694,7 @@ class Level():
         self.projectile_list = spriteGroup()
         self.ladder_list = spriteGroup()
         self.portal_list = spriteGroup()
+        self.boss_list = spriteGroup()
         self.item_message_list1 = spriteGroup()
         self.item_message_list2 = spriteGroup()
         self.item_message_list3 = spriteGroup()
@@ -632,6 +709,7 @@ class Level():
             self.projectile_list,
             self.ladder_list,
             self.portal_list,
+            self.boss_list,
             self.item_message_list1,
             self.item_message_list2,
             self.item_message_list3,
@@ -817,8 +895,17 @@ class Level_03(Level):
 
 def main(current_level_no = 0):
 
+    
+    global kill_count
+    global boss_spawn
     # Game settings
     # Loop until the user clicks the close button.
+    done = False
+    kill_count = 0
+    boss_spawn = False
+    last_minion = 0
+    
+    
     done = False
     clock = pygame.time.Clock()
     pygame.display.set_caption("Pyoneers")
@@ -1102,11 +1189,11 @@ def main(current_level_no = 0):
                         currentBg = bg
                         
                         
-    def spawn_arena_enemy():
+    def spawn_arena_enemy(): # a dedicated spawn function for the arena battle - allows variability
         
         global last_enemy
-        global enemy02
         global kill_count
+<<<<<<< HEAD
       
 #        if kill_count < 10:
 #        
@@ -1148,15 +1235,113 @@ def main(current_level_no = 0):
 #            enemy05.player = player
 #            enemy05.level = current_level
 #            player.level.enemy_list.add(enemy05)
+=======
+        global boss_spawn
         
         
-        last_enemy = pygame.time.get_ticks()
+        if boss_spawn == True:
+            
+            global current_time
+            
+            global last_minion
+            
+            
+            if current_time > last_minion + 10000:
+
+                
+                minion1 = Enemy01()
+                minion1.rect.x = 700
+                minion1.rect.y = 150
+                minion1.player = player
+                minion1.level = current_level
+                player.level.enemy_list.add(minion1)
+            
+                minion2 = Enemy01()
+                minion2.rect.x = 600
+                minion2.rect.y = 150
+                minion2.player = player
+                minion2.level = current_level
+                player.level.enemy_list.add(minion2)
+                
+                minion3 = Enemy01()
+                minion3.rect.x = 500
+                minion3.rect.y = 150
+                minion3.player = player
+                minion3.level = current_level
+                player.level.enemy_list.add(minion3) 
+                   
+                
+                last_minion = pygame.time.get_ticks()
+            else:
+                pass
+        
+        else:
+        
+      
+            if kill_count < 6:
+        
+                last_enemy = pygame.time.get_ticks()
+            
+                enemy_spawnpoint = random.randint(0,2)
+        
+        
+                if enemy_spawnpoint < 2:
+                
+                    enemy_type = random.randint(0,1)
+                    
+                    if enemy_type == 1:
+                        enemy02 = Enemy03()
+                        enemy02.rect.x = 250  
+                        enemy02.rect.y = 150
+                    else:  
+                        enemy02 = Enemy01()
+                        enemy02.rect.x = 250
+                        enemy02.rect.y = 150
+                else:
+                    enemy02 = Enemy02()
+                    enemy02.rect.x = 800
+                    enemy02.rect.y = 550
+                
+                enemy02.player = player
+                enemy02.level = current_level
+                player.level.enemy_list.add(enemy02)
+        
+            else:
+    
+                boss = Boss()
+                boss.rect.x = 900
+                boss.rect.y = 150
+                boss.player = player
+                boss.level = current_level
+                player.level.boss_list.add(boss)
+                boss_spawn = True
+            
+         
+           
+            
+>>>>>>> master
+        
+                
+    def boss_death():
+    
+        pass
+       
+        
+    def game_complete(): # a screen only for those who are worthy
+        
+        currentBg.fill((100, 100, 100))
+        currentBg.blit(text4,
+                (500 - text4.get_width() // 2, 240 - text4.get_height() // 2))
+        redrawWindow()
+            
 
     # -------- Main Program Loop -----------
     while not done:
         
         gameIntro()
-        global kill_count
+        global boss
+        global current_time
+        global boss_health
 
         if player.rect.bottom <= 0 or player.rect.top >= SCREEN_HEIGHT:
             game_over()
@@ -1173,14 +1358,25 @@ def main(current_level_no = 0):
             if projectile.rect.x > player.rect.x + 450 or projectile.rect.x < player.rect.x - 450:
                 projectile.kill()
             for enemy in player.level.enemy_list:
+                
                 projectile_enemy_hit = pygame.sprite.spritecollide(projectile, player.level.enemy_list, False)
-                for x in projectile_enemy_hit:
-                    projectile.kill()
-                    x.kill()
-                    kill_count += 1
-            projectile_platform_hit = pygame.sprite.spritecollide(projectile, player.level.platform_list, False)
-            for y in projectile_platform_hit:
-                projectile.kill()
+                for x in projectile_enemy_hit:            
+                        projectile.kill()
+                        x.kill()
+                        if current_level_no == 1:
+                            kill_count += 1
+                        else:
+                            pass
+                        
+                projectile_boss_hit = pygame.sprite.spritecollide(projectile, player.level.boss_list, False)
+                for x in projectile_boss_hit:            
+                        projectile.kill()
+                        if boss_health > 1:
+                            boss_health -= 1
+                            print(boss_health)
+                        else:
+                            boss_death()
+                        
                 
         for portal in player.level.portal_list:
             portal_hit = pygame.sprite.spritecollide(player, player.level.portal_list, False)
