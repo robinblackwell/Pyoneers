@@ -1,8 +1,11 @@
 
 
 # Nightmare Valley
-Brief descritption of the game.
+Platformer game built on Python with Pygame as part of the University of Nottingham MSc Programming module group project.
 
+Awarded: Best Overall Game 2019.
+
+This is a fork of the final version submitted via Elrumo's Github.
 
 ## Getting Started
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
